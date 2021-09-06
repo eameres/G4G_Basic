@@ -27,23 +27,23 @@ const unsigned int SCR_HEIGHT = 720;
 unsigned int VBO, VAO, EBO, indexCount;
 
 char vtext[1024 * 8] = 
-"#version 330 core\n\n"
+"#version 410 core\n\n"
 "layout (location = 0) in vec3 aPos;\n\n"
 "void main()\n"
 "{\n"
-//"if (gl_VertexID == 0) gl_Position = vec4(0.25, -0.25, 0.0, 1.0);\n"
-//"else if (gl_VertexID == 1) gl_Position = vec4(-0.25, -0.25, 0.0, 1.0);\n"
-//"else gl_Position = vec4(0.25, 0.25, 0.0, 1.0);\n"
-"gl_Position = vec4(aPos,1.0f);\n"
+"if (gl_VertexID == 0) gl_Position = vec4(0.25, -0.25, 0.0, 1.0);\n"
+"else if (gl_VertexID == 1) gl_Position = vec4(-0.25, -0.25, 0.0, 1.0);\n"
+"else gl_Position = vec4(0.25, 0.25, 0.0, 1.0);\n"
+//"gl_Position = vec4(aPos,1.0f);\n"
 "}\n" ; // fragment shader source code
 
 
 char ftext[1024 * 8] =
-"#version 330 core\n\n"
+"#version 410 core\n\n"
 "out vec4 FragColor;\n\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f,0f,0f, 1.0f);\n"
+"   FragColor = vec4(1.0f,0.0f,0.0f, 1.0f);\n"
 "}\n"  ; // vertex shader source code
 
 Shader ourShader;
@@ -56,11 +56,13 @@ int main()
     // ------------------------------
     glfwInit();
 
-    const char* glsl_version = "#version 130";
-   // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-   // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-   // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+    const char* glsl_version = "#version 150";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     // glfw window creation
     // --------------------
     GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Graphics4Games", NULL, NULL);
@@ -85,12 +87,11 @@ int main()
     // build and compile our shader program
     // ------------------------------------
     ourShader.reload(vtext, ftext);
-
-    /*
+    
     indexCount = 3;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-    */
+    
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -106,14 +107,15 @@ int main()
 
         ourShader.use();
 
+        /*
         glBegin(GL_TRIANGLES);
             glVertex3f(-0.6f, -0.4f, 0.f);
             glVertex3f(0.6f, -0.4f, 0.f);
             glVertex3f(0.f, 0.6f, 0.f);
         glEnd();
-        
-        //glBindVertexArray(VAO);
-        //glDrawArrays(GL_TRIANGLES, 0, 3);
+         */
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, indexCount);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
