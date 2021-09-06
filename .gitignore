@@ -15,7 +15,6 @@ build/g4gBuild
 
 # Compiled Dynamic libraries
 *.so
-*.dylib
 *.dll
 
 # Fortran module files
