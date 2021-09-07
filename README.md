@@ -15,8 +15,16 @@ To work with pixel by pixel algorithms, a small texture is used that is written 
 
 using IMGUI the program also allows for "hot swapping" the basic vertex and fragment shaders
 
-building requires VS 2019 (likely works with earlier versions as well) and CMAKE https://cmake.org/
+This example now runs just as well on MacOS as it does on windows (On 9/7/21 at least!)
 
+On Windows, building requires VS 2019 (likely works with earlier versions as well) and CMAKE https://cmake.org/
+On Mac (Only verified on Catalina 10.15) requires XCode 12.4 (IDE and Command Line Tools) and CMAKE https://cmake.org/
+
+On Windows:
 Find the build directory and run the setup batch file.  This will create a g4gBuild directory.  
 Inside that directory you will find a VS2019 solution file named "g4gP1.sln". 
 Open that with Visual Studio (Community Edition)
+
+On MacOS:
+Find the build directory and run the command file (a script). This will create a g4gBuild directory.
+Inside that directory you will find an XCode project named g4gp1, open that in XCode 12.4
