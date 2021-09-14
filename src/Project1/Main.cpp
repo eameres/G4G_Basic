@@ -246,7 +246,7 @@ int main()
     
     renderers.push_back(&myQuad); // add it to the render list
 
-    /*
+    
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
@@ -254,7 +254,7 @@ int main()
 
     myQuad2.setXForm(tf2);
     renderers.push_back(&myQuad2);
-    */
+    
 
     // render loop
     // -----------
@@ -276,7 +276,7 @@ int main()
         glClear(GL_DEPTH_BUFFER_BIT);
 
         // call each of the queued renderers
-        for each (renderer *r in renderers)
+        for(renderer *r : renderers)
         {
             r->render(vMat, pMat);
         }
