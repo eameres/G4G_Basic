@@ -24,6 +24,11 @@
 
 #include "shader_s.h"
 
+
+glm::mat4 pMat;
+glm::mat4 vMat;
+
+
 class QuadRenderer {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
@@ -92,8 +97,11 @@ class QuadRenderer {
     { // here's where the "actual drawing" gets done
 
         myShader->use();
-        transformLoc = glGetUniformLocation(myShader->ID, "m");
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
+        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+
 
         glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
 
@@ -113,6 +121,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 // settings
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
+
 
 unsigned int texture;
 
@@ -145,7 +154,7 @@ void setupTextures()
 
 
 float axis[3] = { 0.0f,0.0f,1.0f };
-float angle = 45.0f;
+float angle = 0.0f;
 
 void drawIMGUI(Shader *ourShader) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -183,8 +192,8 @@ void drawIMGUI(Shader *ourShader) {
         }
 
         ImGui::InputFloat3("Axis", axis,"%.2f");
-        ImGui::SameLine();
-        ImGui::SliderAngle("Angle", &angle,-180.0f,180.0f);
+        //ImGui::SameLine();
+        ImGui::SliderAngle("Angle", &angle,-90.0f,90.0f);
 
         ImGui::Image((void*)(intptr_t)texture, ImVec2(512, 512));
 
@@ -254,6 +263,9 @@ int main()
     myTexture();
     setupTextures();
 
+    pMat = glm::perspective(1.0472f, ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.0f, 100.0f);	//  1.0472 radians = 60 degrees
+    vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,-3.0f));
+
     QuadRenderer myQuad(&ourShader, glm::mat4(1.0f));
 
     // render loop
@@ -296,4 +308,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions
     glViewport(0, 0, width, height);
+
+    pMat = glm::perspective(1.0472f, (float)width / (float)height, 0.1f, 1000.0f);	//  1.0472 radians = 60 degrees
 }
