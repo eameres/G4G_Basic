@@ -14,6 +14,10 @@ public:
     unsigned int ID;
     const char* vertexPath;
     const char* fragmentPath;
+
+public:
+    char vtext[8192], ftext[8192];
+
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
 
@@ -51,8 +55,17 @@ public:
         {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
         }
+        int myLen = vertexCode.length();
 
-        reload(vertexCode.c_str(), fragmentCode.c_str());
+        memcpy(vtext, vertexCode.c_str(), vertexCode.length());
+        vtext[vertexCode.length()] = 0;
+        memcpy(ftext, fragmentCode.c_str(), fragmentCode.length());
+        ftext[fragmentCode.length()] = 0;
+
+        reload();
+    }
+    void reload() {
+        reload(vtext, ftext);
     }
     void reload(const char* vShaderCode, const char* fShaderCode) {
         
@@ -99,6 +112,17 @@ public:
     void setFloat(const std::string& name, float value) const
     {
         glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+    }
+    void saveShaders() {
+        std::ofstream myfile;
+
+        myfile.open("data/vertex.lgsl");
+        myfile << vtext;
+        myfile.close();
+
+        myfile.open("data/fragment.lgsl");
+        myfile << ftext;
+        myfile.close();
     }
 
 private:
