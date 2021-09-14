@@ -46,7 +46,7 @@ class QuadRenderer {
 
     Shader *myShader;
 
-    public : void initRenderer(Shader *shader,glm::mat4 m) 
+    public : QuadRenderer(Shader *shader,glm::mat4 m) 
     {
 
         modelMatrix = m;
@@ -254,9 +254,7 @@ int main()
     myTexture();
     setupTextures();
 
-    QuadRenderer myQuad;
-
-    myQuad.initRenderer(&ourShader, glm::mat4(1.0f));
+    QuadRenderer myQuad(&ourShader, glm::mat4(1.0f));
 
     // render loop
     // -----------
