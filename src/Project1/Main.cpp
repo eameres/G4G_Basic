@@ -23,100 +23,21 @@
 #include <filesystem>
 
 #include "shader_s.h"
+#include "renderer.h"
 
-
-glm::mat4 pMat;
-glm::mat4 vMat;
-
-
-class QuadRenderer {
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    float vertices[12] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
-    };
-    unsigned int indices[6] = {  // note that we start from 0!
-        0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
-    };
-
-    unsigned int VBO, VAO, EBO;
-
-    glm::mat4 modelMatrix;
-
-    unsigned int transformLoc;
-
-    Shader *myShader;
-
-    public : QuadRenderer(Shader *shader,glm::mat4 m) 
-    {
-
-        modelMatrix = m;
-
-        myShader = shader;
-
-        transformLoc = glGetUniformLocation(myShader->ID, "m");
-
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
-        // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-        glBindVertexArray(VAO);
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-        // don't be tempted to do this --->  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-        // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-        glBindVertexArray(0);
-    }
-
-    public : void rotate(float axis[], float angle)
-    {
-        modelMatrix = glm::mat4(1.0f);
-
-        modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(axis[0],axis[1],axis[2]));
-    }
-
-    public :  void render() 
-    { // here's where the "actual drawing" gets done
-
-        myShader->use();
-
-        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
-        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
-
-
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    }
-};
-
-using namespace std;
-
-#pragma warning( disable : 26451 )
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+glm::mat4 pMat; // perspective matrix
+glm::mat4 vMat; // view matrix
+
+
+// used to get values from imGui to the model matrix
+float axis[] = { 0.0f,0.0f,1.0f };
+float angle = 0.0f;
+
+float transVec[] = { 0.0f,0.0f,0.0f };
+float scaleVec[] = { 1.0f,1.0f,1.0f };
 
 // settings
 const unsigned int SCR_WIDTH = 1280;
@@ -129,6 +50,64 @@ unsigned int texture;
 extern unsigned char imageBuff[512][512][3];
 
 int myTexture();
+
+class QuadRenderer : public renderer {
+    // ------------------------------------------------------------------
+    float vertices[12] = {
+         0.5f,  0.5f, 0.0f,  // top right
+         0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f,  // bottom left
+        -0.5f,  0.5f, 0.0f   // top left 
+    };
+
+protected: 
+    unsigned int indices[6] = {  // note that we start from 0!
+        0, 1, 3,  // first Triangle
+        1, 2, 3   // second Triangle
+    };
+
+    public : QuadRenderer(Shader *shader,glm::mat4 m) 
+    {
+        // set up vertex data (and buffer(s)) and configure vertex attributes
+        indexCount = sizeof(indices)/sizeof(unsigned int);
+        modelMatrix = m;
+
+        myShader = shader;
+
+        glGenVertexArrays(1, &VAO);
+        glGenBuffers(1, &VBO);
+        glGenBuffers(1, &EBO);
+        // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+        glBindVertexArray(VAO);
+
+
+        // vertex buffer object, simple version, just coordinates
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // set up the element array buffer containing the vertex indices for the "mesh"
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        // remember: do NOT unbind the EBO while a VAO is active, as the bound element buffer object IS stored in the VAO; keep the EBO bound.
+        // don't be tempted to do this --->  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+        // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+        glBindVertexArray(0);
+    }
+};
+
+#pragma warning( disable : 26451 )
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 void setupTextures()
 {
@@ -152,10 +131,6 @@ void setupTextures()
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-
-float axis[3] = { 0.0f,0.0f,1.0f };
-float angle = 0.0f;
-
 void drawIMGUI(Shader *ourShader) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
@@ -163,8 +138,6 @@ void drawIMGUI(Shader *ourShader) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        static float f = 0.0f;
 
         ImGui::Begin("Graphics For Games");  // Create a window and append into it.
 
@@ -180,20 +153,19 @@ void drawIMGUI(Shader *ourShader) {
         ImGui::Text(std::filesystem::absolute("./data/fragment.glsl").u8string().c_str());
         ImGui::InputTextMultiline("Fragment Shader", ourShader->ftext, IM_ARRAYSIZE(ourShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
-        
-        if (ImGui::Button("Use Shaders", ImVec2(100, 20)))
+
+        if (ImGui::Button("reCompile Shaders"))
             ourShader->reload();
 
-        ImGui::SameLine(115);
+        ImGui::SameLine();
 
-        if (ImGui::Button("Save Shaders", ImVec2(120, 20)))
-        {
+        if (ImGui::Button("Save Shaders"))
             ourShader->saveShaders();
-        }
 
+        ImGui::InputFloat3("Translate", transVec, "%.2f");
         ImGui::InputFloat3("Axis", axis,"%.2f");
-        //ImGui::SameLine();
         ImGui::SliderAngle("Angle", &angle,-90.0f,90.0f);
+        ImGui::InputFloat3("Scale", scaleVec, "%.2f");
 
         ImGui::Image((void*)(intptr_t)texture, ImVec2(512, 512));
 
@@ -263,10 +235,26 @@ int main()
     myTexture();
     setupTextures();
 
+    // set up the perspective and the camera
     pMat = glm::perspective(1.0472f, ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.0f, 100.0f);	//  1.0472 radians = 60 degrees
     vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,-3.0f));
 
-    QuadRenderer myQuad(&ourShader, glm::mat4(1.0f));
+    // pave the way for "scene" rendering
+    std::vector<renderer*> renderers;
+
+    QuadRenderer myQuad(&ourShader, glm::mat4(1.0f)); // our "first quad"
+    
+    renderers.push_back(&myQuad); // add it to the render list
+
+    /*
+    glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
+    tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
+
+    QuadRenderer myQuad2(&ourShader, glm::mat4(.5f));
+
+    myQuad2.setXForm(tf2);
+    renderers.push_back(&myQuad2);
+    */
 
     // render loop
     // -----------
@@ -287,11 +275,20 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        myQuad.render();
+        // call each of the queued renderers
+        for each (renderer *r in renderers)
+        {
+            r->render(vMat, pMat);
+        }
 
+        // draw imGui over the top
         drawIMGUI(&ourShader);
 
-        myQuad.rotate(axis,angle);
+        // factor in the results of imgui tweaks for the next round...
+        myQuad.setXForm(glm::mat4(1.0f));
+        myQuad.translate(transVec);
+        myQuad.rotate(axis, angle);
+        myQuad.scale(scaleVec);
 
         glfwSwapBuffers(window);
     }

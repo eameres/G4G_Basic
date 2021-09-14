@@ -8,5 +8,5 @@ uniform mat4 p; // perspective
 
 void main()
 {
-	gl_Position = vec4(aPos, 1.0);
+	gl_Position = p*v*m*vec4(aPos, 1.0);
 }

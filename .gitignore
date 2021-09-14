@@ -29,3 +29,5 @@ build/g4gBuild
 *.out
 *.app
 build/imgui.ini
+imgui.ini
+imgui.ini
