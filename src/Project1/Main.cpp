@@ -38,7 +38,6 @@ class QuadRenderer {
         1, 2, 3   // second Triangle
     };
 
-public:
     unsigned int VBO, VAO, EBO;
 
     glm::mat4 modelMatrix;
@@ -47,7 +46,8 @@ public:
 
     Shader *myShader;
 
-    void initRenderer(Shader *shader,glm::mat4 m) {
+    public : void initRenderer(Shader *shader,glm::mat4 m) 
+    {
 
         modelMatrix = m;
 
@@ -81,13 +81,16 @@ public:
         glBindVertexArray(0);
     }
 
-    void rotate(float axis[], float angle) {
+    public : void rotate(float axis[], float angle)
+    {
         modelMatrix = glm::mat4(1.0f);
 
         modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(axis[0],axis[1],axis[2]));
     }
 
-    void render() {
+    public :  void render() 
+    { // here's where the "actual drawing" gets done
+
         myShader->use();
         transformLoc = glGetUniformLocation(myShader->ID, "m");
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(modelMatrix));
@@ -100,56 +103,7 @@ public:
 };
 
 using namespace std;
-/*
-char vtext[1024 * 8] =
-"#version 330 core\n\n"
-"layout (location = 0) in vec3 aPos;\n\n"
-"void main()\n"
-"{\n"
-//"   gl_Position = vec4(aPos, 1.0);\n"
-"if (gl_VertexID == 0) gl_Position = vec4(0.25, -0.25, 0.0, 1.0);\n"
-"else if (gl_VertexID == 1) gl_Position = vec4(-0.25, -0.25, 0.0, 1.0);\n"
-"else gl_Position = vec4(0.25, 0.25, 0.0, 1.0);\n"
-"}\n"; // fragment shader source code
 
-
-char ftext[1024 * 8] =
-"#version 330 core\n\n"
-"out vec4 FragColor;\n\n"
-"uniform vec4 ourColor;\n\n"
-"void main()\n"
-"{\n"
-"   FragColor = ourColor; //vec4(1.0f,0f,0f, 1.0f);\n"
-"}\n"; // vertex shader source code
-
-
-string readFile(const char* filePath) {
-    string content;
-    ifstream fileStream(filePath, ios::in);
-    if (fileStream.fail())
-        return (string)"empty";
-
-    string line = "";
-    while (!fileStream.eof()) {
-        getline(fileStream, line);
-        content.append(line + "\n");
-    }
-    fileStream.close();
-    return content;
-}
-
-void saveShaders() {
-    std::ofstream myfile;
-
-    myfile.open("data/vertex.lgsl");
-    myfile << vtext;
-    myfile.close();
-
-    myfile.open("data/fragment.lgsl");
-    myfile << ftext;
-    myfile.close();
-}
-*/
 #pragma warning( disable : 26451 )
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -256,8 +210,6 @@ int main()
 
     std::cout << "Absolute path for shaders is " << std::filesystem::absolute("./data/") << '\n';
 
-
-
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -299,15 +251,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    //strcpy_s(ftext, readFile("data/fragment.lgsl").c_str());
-    //strcpy_s(vtext, readFile("data/vertex.lgsl").c_str());
-
-    // build and compile our shader program
-    // ------------------------------------
-    ourShader.reload();
-
     myTexture();
-
     setupTextures();
 
     QuadRenderer myQuad;
@@ -334,8 +278,6 @@ int main()
         glClear(GL_DEPTH_BUFFER_BIT);
 
         myQuad.render();
-
-        // draw stuff here!
 
         drawIMGUI(&ourShader);
 
