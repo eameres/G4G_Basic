@@ -31,18 +31,9 @@
 glm::mat4 pMat; // perspective matrix
 glm::mat4 vMat; // view matrix
 
-
-// used to get values from imGui to the model matrix
-float axis[] = { 0.0f,0.0f,1.0f };
-float angle = 0.0f;
-
-float transVec[] = { 0.0f,0.0f,0.0f };
-float scaleVec[] = { 1.0f,1.0f,1.0f };
-
 // settings
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
-
 
 unsigned int texture;
 
@@ -69,7 +60,6 @@ protected:
     public : QuadRenderer(Shader *shader,glm::mat4 m) 
     {
         // set up vertex data (and buffer(s)) and configure vertex attributes
-        indexCount = sizeof(indices)/sizeof(unsigned int);
         modelMatrix = m;
 
         myShader = shader;
@@ -95,6 +85,8 @@ protected:
         // set up the element array buffer containing the vertex indices for the "mesh"
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        indexCount = sizeof(indices) / sizeof(unsigned int);
 
         // remember: do NOT unbind the EBO while a VAO is active, as the bound element buffer object IS stored in the VAO; keep the EBO bound.
         // don't be tempted to do this --->  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -131,9 +123,16 @@ void setupTextures()
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void drawIMGUI(Shader *ourShader) {
+void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
+        // used to get values from imGui to the model matrix
+        static float axis[] = { 0.0f,0.0f,1.0f };
+        static float angle = 0.0f;
+
+        static float transVec[] = { 0.0f,0.0f,0.0f };
+        static float scaleVec[] = { 1.0f,1.0f,1.0f };
+
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -163,20 +162,28 @@ void drawIMGUI(Shader *ourShader) {
         if (ImGui::Button("Save Shaders"))
             ourShader->saveShaders();
 
-        // values we'll use to rderive a model matrix
-        ImGui::InputFloat3("Translate", transVec, "%.2f");
+        // values we'll use to derive a model matrix
+        ImGui::DragFloat3("Translate", transVec,.01f, -3.0f, 3.0f);
         ImGui::InputFloat3("Axis", axis,"%.2f");
         ImGui::SliderAngle("Angle", &angle,-90.0f,90.0f);
-        ImGui::InputFloat3("Scale", scaleVec, "%.2f");
+        ImGui::DragFloat3("Scale", scaleVec,.01f,-3.0f,3.0f);
 
         // show the texture that we generated
-        ImGui::Image((void*)(intptr_t)texture, ImVec2(512, 512));
+        ImGui::Image((void*)(intptr_t)texture, ImVec2(64, 64));
+
+        //ImGui::ShowDemoWindow(); // easter agg!  show the ImGui demo window
 
         ImGui::End();
 
         // IMGUI Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        // factor in the results of imgui tweaks for the next round...
+        myRenderer->setXForm(glm::mat4(1.0f));
+        myRenderer->translate(transVec);
+        myRenderer->rotate(axis, angle);
+        myRenderer->scale(scaleVec);
     }
 }
 
@@ -225,7 +232,6 @@ int main()
         return -1;
     }
 
-    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl");
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -234,6 +240,8 @@ int main()
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl"); // declare and intialize our shader
 
     myTexture();
     setupTextures();
@@ -291,13 +299,7 @@ int main()
         }
 
         // draw imGui over the top
-        drawIMGUI(&ourShader);
-
-        // factor in the results of imgui tweaks for the next round...
-        myQuad.setXForm(glm::mat4(1.0f));
-        myQuad.translate(transVec);
-        myQuad.rotate(axis, angle);
-        myQuad.scale(scaleVec);
+        drawIMGUI(&ourShader,&myQuad);
 
         glfwSwapBuffers(window);
     }

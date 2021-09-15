@@ -35,14 +35,19 @@ public: void scale(const float scale[])
     public:  void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime)
     { // here's where the "actual drawing" gets done
 
+        glm::mat4 mvp;
+
         myShader->use();
 
         //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
+
+        mvp = pMat * vMat * modelMatrix;
 
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
+        glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
         glBindVertexArray(VAO);
 
