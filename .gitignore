@@ -31,3 +31,4 @@ build/g4gBuild
 build/imgui.ini
 imgui.ini
 imgui.ini
+*.ini

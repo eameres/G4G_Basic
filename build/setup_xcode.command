@@ -10,4 +10,5 @@ cd "$DIRECTORY"
 
 mkdir ./g4gbuild
 cd g4gbuild
-cmake -GXcode ../../src/Project2
+cmake -GXcode ../../src/Project3
+cd ..
