@@ -28,3 +28,5 @@ Open that with Visual Studio (Community Edition)
 On MacOS:
 Find the build directory and run the command file (a script). This will create a g4gBuild directory.
 Inside that directory you will find an XCode project named g4gp1, open that in XCode 12.4
+
+It has been reported that the sandbox works in Big Sur with newer XCode, but I don't know the specific versions
