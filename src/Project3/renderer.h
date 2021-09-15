@@ -6,7 +6,7 @@ class renderer {
 
 protected:
     unsigned int VBO = 0, VAO = 0, EBO = 0;
-    unsigned int indexCount;
+    int indexCount;
 
     glm::mat4 modelMatrix;
 
@@ -51,6 +51,11 @@ public: void scale(const float scale[])
 
         glBindVertexArray(VAO);
 
-        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+        if (indexCount < 0) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDrawArrays(GL_TRIANGLES, 0, -indexCount);
+        }else
+            glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+
     }
 };
