@@ -17,34 +17,35 @@ public: void setXForm(glm::mat4 mat)
     modelMatrix = mat;
 }
 
-public: void rotate(float axis[], float angle)
+public: void rotate(const float axis[], const float angle)
 {
     modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(axis[0], axis[1], axis[2]));
 }    
 
-public: void translate(float trans[])
+public: void translate(const float trans[])
 {
     modelMatrix = glm::translate(modelMatrix, glm::vec3(trans[0], trans[1], trans[2]));
 }
 
-public: void scale(float scale[])
+public: void scale(const float scale[])
 {
     modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
 }
 
-    public:  void render(glm::mat4 vMat, glm::mat4 pMat)
+    public:  void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime)
     { // here's where the "actual drawing" gets done
 
         myShader->use();
+
+        //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
 
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        glBindVertexArray(VAO);
 
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
     }
 };

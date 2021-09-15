@@ -144,15 +144,16 @@ void drawIMGUI(Shader *ourShader) {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
         static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+        
         ImGui::Text("Vertex Shader");
         ImGui::SameLine();
         ImGui::Text(std::filesystem::absolute("./data/vertex.glsl").u8string().c_str());
         ImGui::InputTextMultiline("Vertex Shader", ourShader->vtext, IM_ARRAYSIZE(ourShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+        
         ImGui::Text("Fragment Shader" );
         ImGui::SameLine();
         ImGui::Text(std::filesystem::absolute("./data/fragment.glsl").u8string().c_str());
         ImGui::InputTextMultiline("Fragment Shader", ourShader->ftext, IM_ARRAYSIZE(ourShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-
 
         if (ImGui::Button("reCompile Shaders"))
             ourShader->reload();
@@ -162,11 +163,13 @@ void drawIMGUI(Shader *ourShader) {
         if (ImGui::Button("Save Shaders"))
             ourShader->saveShaders();
 
+        // values we'll use to rderive a model matrix
         ImGui::InputFloat3("Translate", transVec, "%.2f");
         ImGui::InputFloat3("Axis", axis,"%.2f");
         ImGui::SliderAngle("Angle", &angle,-90.0f,90.0f);
         ImGui::InputFloat3("Scale", scaleVec, "%.2f");
 
+        // show the texture that we generated
         ImGui::Image((void*)(intptr_t)texture, ImVec2(512, 512));
 
         ImGui::End();
@@ -246,21 +249,27 @@ int main()
     
     renderers.push_back(&myQuad); // add it to the render list
 
-    
+    // easter egg!  add another quad to the render list
+    /*
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
-    QuadRenderer myQuad2(&ourShader, glm::mat4(.5f));
-
-    myQuad2.setXForm(tf2);
+    QuadRenderer myQuad2(&ourShader, tf2);
     renderers.push_back(&myQuad2);
-    
+    */    
 
     // render loop
     // -----------
 
+    double lastTime = glfwGetTime();
+
     while (!glfwWindowShouldClose(window))
     {
+        // just like in a game engine, it's useful to know the delta time
+        double currentTime = glfwGetTime();
+        double deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
         // glfw: poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwPollEvents();
@@ -278,7 +287,7 @@ int main()
         // call each of the queued renderers
         for(renderer *r : renderers)
         {
-            r->render(vMat, pMat);
+            r->render(vMat, pMat, deltaTime);
         }
 
         // draw imGui over the top
