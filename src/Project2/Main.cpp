@@ -3,7 +3,6 @@
 // created May 2021 by Eric Ameres for experimenting
 // with OpenGL and various graphics algorithms
 //
-// now working on a branch
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
