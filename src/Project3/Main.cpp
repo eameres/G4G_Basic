@@ -35,12 +35,13 @@ glm::mat4 vMat; // view matrix
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
-unsigned int texture;
+unsigned int texture[] = { 0,1 };
 
 // image buffer used by raster drawing basics.cpp
 extern unsigned char imageBuff[512][512][3];
 
 int myTexture();
+int RayTracer();
 
 class QuadRenderer : public renderer {
     // ------------------------------------------------------------------
@@ -146,15 +147,9 @@ public: CubeRenderer(Shader* shader, glm::mat4 m)
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-void setupTextures()
+void setupTexture(unsigned int tNum) 
 {
-    // create textures 
-        // -------------------------
-    glGenTextures(1, &texture);
-
-    // texture is a buffer we will be generating for pixel experiments
-    glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-
+    glBindTexture(GL_TEXTURE_2D, texture[tNum]); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -166,6 +161,19 @@ void setupTextures()
     // load image, create texture and generate mipmaps
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, (const void*)imageBuff);
     glGenerateMipmap(GL_TEXTURE_2D);
+}
+void setupTextures()
+{
+    // create textures 
+    // -------------------------
+    glGenTextures(2, texture);
+
+    myTexture();
+    setupTexture(0);
+    // texture is a buffer we will be generating for pixel experiments
+
+    RayTracer();
+    setupTexture(1);
 }
 
 void drawIMGUI(Shader* ourShader, Shader* tShader, Shader* txShader, renderer *myRenderer) {
@@ -239,6 +247,9 @@ void drawIMGUI(Shader* ourShader, Shader* tShader, Shader* txShader, renderer *m
             if (ImGui::Button("Save Shaders"))
                gShader->saveShaders();
 
+            ImGui::SameLine(); if (ImGui::Button("Texture 0")) glBindTexture(GL_TEXTURE_2D, texture[0]);
+            ImGui::SameLine(); if (ImGui::Button("Texture 1")) glBindTexture(GL_TEXTURE_2D, texture[1]);
+
         }
 
         ImGui::Text("Model Matrix");
@@ -270,7 +281,8 @@ void drawIMGUI(Shader* ourShader, Shader* tShader, Shader* txShader, renderer *m
         vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
         
         // show the texture that we generated
-        ImGui::Image((void*)(intptr_t)texture, ImVec2(64, 64));
+        ImGui::Image((void*)(intptr_t)texture[0], ImVec2(64, 64));
+        ImGui::SameLine(); ImGui::Image((void*)(intptr_t)texture[1], ImVec2(64, 64));
 
         //ImGui::ShowDemoWindow(); // easter agg!  show the ImGui demo window
 
@@ -339,7 +351,6 @@ int main()
     Shader tShader("data/vertColors.lgsl", "data/fragColors.lgsl"); // declare and intialize shader with colored vertices
     Shader txShader("data/vertTexture.lgsl", "data/fragTexture.lgsl"); // declare and intialize shader with colored vertices
 
-    myTexture();
     setupTextures();
 
     // set up the perspective and the camera
