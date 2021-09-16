@@ -175,6 +175,12 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         static float transVec[] = { 0.0f,0.0f,0.0f };
         static float scaleVec[] = { 1.0f,1.0f,1.0f };
 
+        // used to get values from imGui to the camera (view) matrix
+        static float v_axis[] = { 0.0f,0.0f,1.0f };
+        static float v_angle = 0.0f;
+
+        static float v_transVec[] = { 0.0f,0.0f,0.0f };
+        
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -204,12 +210,28 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         if (ImGui::Button("Save Shaders"))
             ourShader->saveShaders();
 
+        ImGui::Text("Model Matrix");
         // values we'll use to derive a model matrix
         ImGui::DragFloat3("Translate", transVec,.01f, -3.0f, 3.0f);
         ImGui::InputFloat3("Axis", axis,"%.2f");
         ImGui::SliderAngle("Angle", &angle,-90.0f,90.0f);
         ImGui::DragFloat3("Scale", scaleVec,.01f,-3.0f,3.0f);
-
+        
+        // factor in the results of imgui tweaks for the next round...
+        myRenderer->setXForm(glm::mat4(1.0f));
+        myRenderer->translate(transVec);
+        myRenderer->rotate(axis, angle);
+        myRenderer->scale(scaleVec);
+        
+        ImGui::Text("Camera Matrix");
+        // values we'll use to derive a model matrix
+        ImGui::DragFloat3("vTranslate", v_transVec,.01f, -6.0f, 6.0f);
+        ImGui::InputFloat3("vAxis", v_axis,"%.2f");
+        ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
+        
+        vMat = glm::translate(glm::mat4(1.0f), -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
+        vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
+        
         // show the texture that we generated
         ImGui::Image((void*)(intptr_t)texture, ImVec2(64, 64));
 
@@ -221,11 +243,7 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        // factor in the results of imgui tweaks for the next round...
-        myRenderer->setXForm(glm::mat4(1.0f));
-        myRenderer->translate(transVec);
-        myRenderer->rotate(axis, angle);
-        myRenderer->scale(scaleVec);
+
     }
 }
 
@@ -290,7 +308,6 @@ int main()
 
     // set up the perspective and the camera
     pMat = glm::perspective(1.0472f, ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.0f, 100.0f);	//  1.0472 radians = 60 degrees
-    vMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.0f,-3.0f));
 
     // pave the way for "scene" rendering
     std::vector<renderer*> renderers;
