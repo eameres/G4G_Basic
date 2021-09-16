@@ -44,11 +44,11 @@ int myTexture();
 
 class QuadRenderer : public renderer {
     // ------------------------------------------------------------------
-    float vertices[12] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+    float vertices[24] = {
+         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // top right
+         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  // bottom left
+        -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f  // top left 
     };
 
 protected: 
@@ -76,8 +76,11 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
 
         // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -165,7 +168,7 @@ void setupTextures()
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
+void drawIMGUI(Shader* ourShader, Shader* tShader, Shader* txShader, renderer *myRenderer) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -192,25 +195,51 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-        static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-        
-        ImGui::Text("Vertex Shader");
-        ImGui::SameLine();
-        ImGui::Text(std::filesystem::absolute("./data/vertTextured.lgsl").u8string().c_str());
-        ImGui::InputTextMultiline("Vertex Shader", ourShader->vtext, IM_ARRAYSIZE(ourShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-        
-        ImGui::Text("Fragment Shader" );
-        ImGui::SameLine();
-        ImGui::Text(std::filesystem::absolute("./data/fragTextured.lgsl").u8string().c_str());
-        ImGui::InputTextMultiline("Fragment Shader", ourShader->ftext, IM_ARRAYSIZE(ourShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
-        if (ImGui::Button("reCompile Shaders"))
-            ourShader->reload();
+        if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
+        {
+            Shader* gShader = ourShader;
 
-        ImGui::SameLine();
+            if (ImGui::BeginTabItem("standard"))
+            {
+                gShader = ourShader;
+                ImGui::EndTabItem();
+            }
 
-        if (ImGui::Button("Save Shaders"))
-            ourShader->saveShaders();
+            if (ImGui::BeginTabItem("VertexColors"))
+            {
+                gShader = tShader;
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("textured"))
+            {
+                gShader = txShader;
+                ImGui::EndTabItem();
+            }
+
+            ImGui::EndTabBar();
+
+            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+            ImGui::Text("Vertex Shader");
+            ImGui::SameLine();
+            ImGui::Text(std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
+            ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+
+            ImGui::Text("Fragment Shader");
+            ImGui::SameLine();
+            ImGui::Text(std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
+            ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+
+            if (ImGui::Button("reCompile Shaders"))
+                gShader->reload();
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Save Shaders"))
+               gShader->saveShaders();
+
+        }
 
         ImGui::Text("Model Matrix");
         // values we'll use to derive a model matrix
@@ -234,8 +263,9 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         if (!autoPan)
             ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
         else
-            v_angle = fmod(glfwGetTime(),M_PI*2.0) - M_PI;
+            v_angle = fmod(glfwGetTime(), glm::pi<float>() *2.0) - glm::pi<float>();
         
+        vMat = glm::mat4(1.0f);
         vMat = glm::translate(glm::mat4(1.0f), -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
         vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
         
@@ -297,7 +327,6 @@ int main()
         return -1;
     }
 
-
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
@@ -306,18 +335,21 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    Shader ourShader("data/vertTextured.lgsl", "data/fragTextured.lgsl"); // declare and intialize our shader
+    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl"); // declare and intialize our shader
+    Shader tShader("data/vertColors.lgsl", "data/fragColors.lgsl"); // declare and intialize shader with colored vertices
+    Shader txShader("data/vertTexture.lgsl", "data/fragTexture.lgsl"); // declare and intialize shader with colored vertices
 
     myTexture();
     setupTextures();
 
     // set up the perspective and the camera
-    pMat = glm::perspective(1.0472f, ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.0f, 100.0f);	//  1.0472 radians = 60 degrees
+    pMat = glm::perspective(1.0472f, ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
+
 
     // pave the way for "scene" rendering
     std::vector<renderer*> renderers;
 
-    QuadRenderer myQuad(&ourShader, glm::mat4(1.0f)); // our "first quad"
+    QuadRenderer myQuad(&tShader, glm::mat4(1.0f)); // our "first quad"
     
     renderers.push_back(&myQuad); // add it to the render list
 
@@ -326,14 +358,23 @@ int main()
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
-    CubeRenderer myQuad2(&ourShader, tf2);
-    renderers.push_back(&myQuad2);
+    CubeRenderer myCube1(&ourShader, tf2);
+    renderers.push_back(&myCube1);
+
+    tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(1.5f, 0.0f, 0.0f));
+    tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
+
+    CubeRenderer myCube2(&txShader, tf2);
+    renderers.push_back(&myCube2);
         
 
     // render loop
     // -----------
 
     double lastTime = glfwGetTime();
+
+    glEnable(GL_DEPTH_TEST);
+    //glDepthFunc(GL_ALWAYS);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -353,8 +394,9 @@ int main()
         // render background
         // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClear(GL_DEPTH_BUFFER_BIT);
+        //glClearDepthf(999.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
 
         // call each of the queued renderers
         for(renderer *r : renderers)
@@ -363,7 +405,7 @@ int main()
         }
 
         // draw imGui over the top
-        drawIMGUI(&ourShader,&myQuad);
+        drawIMGUI(&ourShader,&tShader, &txShader, &myQuad);
 
         glfwSwapBuffers(window);
     }
@@ -381,5 +423,5 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions
     glViewport(0, 0, width, height);
 
-    pMat = glm::perspective(1.0472f, (float)width / (float)height, 0.1f, 1000.0f);	//  1.0472 radians = 60 degrees
+    pMat = glm::perspective(1.0472f, (float)width / (float)height, 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
 }

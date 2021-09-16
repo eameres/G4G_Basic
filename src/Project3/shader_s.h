@@ -16,7 +16,7 @@ public:
     const char* fragmentPath;
 
 public:
-    char vtext[4096], ftext[4096];
+    char vtext[1024], ftext[1024];
 
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
