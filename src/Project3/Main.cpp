@@ -181,6 +181,8 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
 
         static float v_transVec[] = { 0.0f,0.0f,4.0f };
         
+        static bool autoPan = false;
+        
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -224,10 +226,15 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         myRenderer->scale(scaleVec);
         
         ImGui::Text("Camera Matrix");
+        ImGui::SameLine(); ImGui::Checkbox("AutoPan", &autoPan);
         // values we'll use to derive a model matrix
         ImGui::DragFloat3("vTranslate", v_transVec,.01f, -6.0f, 6.0f);
         ImGui::InputFloat3("vAxis", v_axis,"%.2f");
-        ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
+        
+        if (!autoPan)
+            ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
+        else
+            v_angle = fmod(glfwGetTime(),M_PI*2.0) - M_PI;
         
         vMat = glm::translate(glm::mat4(1.0f), -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
         vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
@@ -315,13 +322,13 @@ int main()
     renderers.push_back(&myQuad); // add it to the render list
 
     // easter egg!  add another quad to the render list
-    /*
+    
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
-    QuadRenderer myQuad2(&ourShader, tf2);
+    CubeRenderer myQuad2(&ourShader, tf2);
     renderers.push_back(&myQuad2);
-    */    
+        
 
     // render loop
     // -----------
