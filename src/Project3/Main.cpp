@@ -176,10 +176,10 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         static float scaleVec[] = { 1.0f,1.0f,1.0f };
 
         // used to get values from imGui to the camera (view) matrix
-        static float v_axis[] = { 0.0f,0.0f,1.0f };
+        static float v_axis[] = { 0.0f,1.0f,0.0f };
         static float v_angle = 0.0f;
 
-        static float v_transVec[] = { 0.0f,0.0f,0.0f };
+        static float v_transVec[] = { 0.0f,0.0f,4.0f };
         
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -242,8 +242,6 @@ void drawIMGUI(Shader *ourShader,renderer *myRenderer) {
         // IMGUI Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-
     }
 }
 
@@ -312,7 +310,7 @@ int main()
     // pave the way for "scene" rendering
     std::vector<renderer*> renderers;
 
-    CubeRenderer myQuad(&ourShader, glm::mat4(1.0f)); // our "first quad"
+    QuadRenderer myQuad(&ourShader, glm::mat4(1.0f)); // our "first quad"
     
     renderers.push_back(&myQuad); // add it to the render list
 

@@ -116,11 +116,11 @@ public:
     void saveShaders() {
         std::ofstream myfile;
 
-        myfile.open("data/vertex.lgsl");
+        myfile.open(vertexPath);
         myfile << vtext;
         myfile.close();
 
-        myfile.open("data/fragment.lgsl");
+        myfile.open(fragmentPath);
         myfile << ftext;
         myfile.close();
     }
