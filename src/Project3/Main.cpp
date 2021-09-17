@@ -246,32 +246,30 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl","base"); // declare and intialize our shader
-    Shader tShader("data/vertColors.lgsl", "data/fragColors.lgsl","colored"); // declare and intialize shader with colored vertices
-    Shader txShader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured"); // declare and intialize shader with colored vertices
-    Shader flShader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit"); // declare and intialize shader with flat lighting
-    
     std::vector<Shader*> shaders;
+
+    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl","base"); // declare and intialize our base shader
     shaders.push_back(&ourShader);
+    
+    Shader tShader("data/vertColors.lgsl", "data/fragColors.lgsl","colored"); // declare and intialize shader with colored vertices
     shaders.push_back(&tShader);
+    
+    Shader txShader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured"); // declare and intialize shader with texture(s)
     shaders.push_back(&txShader);
+    
+    Shader flShader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit"); // declare and intialize shader with ADS lighting
     shaders.push_back(&flShader);
 
     setupTextures();
 
     // set up the perspective and the camera
-    //pMat = glm::perspective(1.0472f, ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
     pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
-
 
     // pave the way for "scene" rendering
     std::vector<renderer*> renderers;
 
     QuadRenderer myQuad(shaders[1], glm::mat4(1.0f)); // our "first quad"
-    
     renderers.push_back(&myQuad); // add it to the render list
-
-    // easter egg!  add another quad to the render list
     
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
@@ -279,16 +277,10 @@ int main()
     objMesh shuttle(shaders[3], tf2);
     renderers.push_back(&shuttle);
 
-    tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
-    //tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
-
-    nCubeRenderer myCube2(shaders[3], tf2);
+    nCubeRenderer myCube2(shaders[3], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
     renderers.push_back(&myCube2);
 
-    tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    //tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
-
-    torus myTorus(shaders[3], tf2);
+    torus myTorus(shaders[3], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     renderers.push_back(&myTorus);
 
     // render loop
