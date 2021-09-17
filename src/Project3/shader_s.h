@@ -14,6 +14,7 @@ public:
     unsigned int ID;
     const char* vertexPath;
     const char* fragmentPath;
+    const char* name;
 
 public:
     char vtext[1024], ftext[1024];
@@ -23,10 +24,11 @@ public:
 
     Shader() {}
 
-    Shader(const char* vPath, const char* fPath)
+    Shader(const char* vPath, const char* fPath, const char* tName)
     {
         vertexPath = vPath;
         fragmentPath = fPath;
+        name = tName;
         // 1. retrieve the vertex/fragment source code from filePath
         std::string vertexCode;
         std::string fragmentCode;

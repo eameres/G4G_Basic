@@ -32,7 +32,7 @@ public: void scale(const float scale[])
     modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
 }
 
-    public:  void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime)
+public:  void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime,glm::vec3 lightLoc)
     { // here's where the "actual drawing" gets done
 
         glm::mat4 mvp;
@@ -48,6 +48,9 @@ public: void scale(const float scale[])
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+        glUniform3f(glGetUniformLocation(myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+        glUniform3fv(glGetUniformLocation(myShader->ID, "lPos"), 1,  glm::value_ptr(lightLoc));
 
         glBindVertexArray(VAO);
 
