@@ -23,6 +23,8 @@
 #include <filesystem>
 
 #include "shader_s.h"
+#include "ImportedModel.h"
+
 #include "camera.h"
 #include "renderer.h"
 
@@ -45,189 +47,6 @@ extern unsigned char imageBuff[512][512][3];
 
 int myTexture();
 int RayTracer();
-
-class QuadRenderer : public renderer {
-    // ------------------------------------------------------------------
-    float vertices[24] = {
-         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f  // top left 
-    };
-
-protected: 
-    unsigned int indices[6] = {  // note that we start from 0!
-        0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
-    };
-
-    public : QuadRenderer(Shader *shader,glm::mat4 m) 
-    {
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        modelMatrix = m;
-
-        myShader = shader;
-
-        glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
-        glGenBuffers(1, &EBO);
-        // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-        glBindVertexArray(VAO);
-
-
-        // vertex buffer object, simple version, just coordinates
-
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-
-        // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        // set up the element array buffer containing the vertex indices for the "mesh"
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-        indexCount = sizeof(indices) / sizeof(unsigned int);
-
-        // remember: do NOT unbind the EBO while a VAO is active, as the bound element buffer object IS stored in the VAO; keep the EBO bound.
-        // don't be tempted to do this --->  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-        // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-        // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-        glBindVertexArray(0);
-    }
-};
-
-class CubeRenderer : public renderer {
-    // ------------------------------------------------------------------
-    float vertices[108] = {
-        -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
-         1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
-        -1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,
-        -1.0f,  1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f
-    };
-
-public: CubeRenderer(Shader* shader, glm::mat4 m)
-{
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    modelMatrix = m;
-
-    myShader = shader;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
-
-    // vertex buffer object, simple version, just coordinates
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    indexCount = -36; // since we have no indices, we tell the render call to use raw triangles by setting indexCount to -numVertices
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
-}
-};
-
-
-class nCubeRenderer : public renderer {
-    // ------------------------------------------------------------------
-    float vertices[216] = {
-           -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-           -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-           -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-           -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-           -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-           -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-
-           -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-           -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-           -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-           -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-           -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-           -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-           -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-           -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-           -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-           -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-           -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-           -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
-
-public: nCubeRenderer(Shader* shader, glm::mat4 m)
-{
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    modelMatrix = m;
-
-    myShader = shader;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
-
-    // vertex buffer object, simple version, just coordinates
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    // position attribute 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    indexCount = -36; // since we have no indices, we tell the render call to use raw triangles by setting indexCount to -numVertices
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
-}
-};
 
 #pragma warning( disable : 26451 )
 
@@ -455,17 +274,22 @@ int main()
     // easter egg!  add another quad to the render list
     
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
-    tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
+    tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
 
-    nCubeRenderer myCube1(shaders[0], tf2);
-    renderers.push_back(&myCube1);
+    objMesh shuttle(shaders[3], tf2);
+    renderers.push_back(&shuttle);
 
     tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f));
     //tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
     nCubeRenderer myCube2(shaders[3], tf2);
     renderers.push_back(&myCube2);
-        
+
+    tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    //tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
+
+    torus myTorus(shaders[3], tf2);
+    renderers.push_back(&myTorus);
 
     // render loop
     // -----------
@@ -499,7 +323,7 @@ int main()
 
 
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
-        glm::vec4 lightPos = rotate * glm::vec4(3, 0, 4.0, 1.0);
+        glm::vec4 lightPos = rotate * glm::vec4(-2, 0, 5.0, 1.0);
 
         // call each of the queued renderers
         for(renderer *r : renderers)
