@@ -258,13 +258,13 @@ int main()
     renderers.push_back(&myQuad); // add it to the render list
 
     // easter egg!  add another quad to the render list
-    /*
+    
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
     QuadRenderer myQuad2(&ourShader, tf2);
     renderers.push_back(&myQuad2);
-    */    
+        
 
     // render loop
     // -----------

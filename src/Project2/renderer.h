@@ -39,7 +39,7 @@ public: void scale(const float scale[])
 
         myShader->use();
 
-        //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
+        rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
         mvp = pMat * vMat * modelMatrix;
 
