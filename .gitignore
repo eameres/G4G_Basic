@@ -1,7 +1,7 @@
 # Prerequisites
 *.d
 
-build/g4gBuild
+g4gBuild
 
 # Compiled Object files
 *.slo
