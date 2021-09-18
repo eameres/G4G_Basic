@@ -203,13 +203,14 @@ QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
     // ------------------------------------------------------------------
     unsigned int indices[6] = {  // note that we start from 0!
         3, 1, 0,  // first Triangle
-        3, 2, 1   // second Triangle
+        0, 2, 3   // second Triangle
     };
-    float vertices[24] = {
-         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f,  1.0f, 1.0f, 1.0f  // top left 
+    float vertices[44] = {
+        // positions            // colors           // texture coords   // normals
+         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+         0.5f,  -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+         -0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f, // top left 
+         -0.5f,  -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f  // bottom left
     };
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -223,17 +224,25 @@ QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
-
     // vertex buffer object, simple version, just coordinates
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    // color attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    // normal attribute
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    // texture coord attribute
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float)));
+    glEnableVertexAttribArray(3);
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);

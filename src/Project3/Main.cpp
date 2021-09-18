@@ -134,6 +134,11 @@ void setupTextures()
     stbi_set_flip_vertically_on_load(false);
 }
 
+
+unsigned int framebuffer;
+unsigned int textureColorbuffer;
+unsigned int textureDepthbuffer;
+
 void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
@@ -186,7 +191,7 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
 
             ImGui::Text("Fragment Shader");
             ImGui::SameLine();
-            ImGui::Text(std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
+            ImGui::Text(std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
             ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
             if (ImGui::Button("reCompile Shaders"))
@@ -196,11 +201,6 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
 
             if (ImGui::Button("Save Shaders"))
                gShader->saveShaders();
-
-            //ImGui::SameLine(); if (ImGui::Button("Texture 0")) gShader->textNum = texture[0];
-            //ImGui::SameLine(); if (ImGui::Button("Texture 1")) gShader->textNum = texture[1];
-            //ImGui::SameLine(); if (ImGui::Button("Texture 2")) gShader->textNum = texture[2];
-
         }
 
         ImGui::Text("Model Matrix");
@@ -246,12 +246,43 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
 
         //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
 
+        ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(256, 256));
+
         ImGui::End();
 
         // IMGUI Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
+}
+
+
+void setupFrameBuffer() {
+    // framebuffer configuration
+    // -------------------------
+
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+    // create a color attachment texture
+    glGenTextures(1, &textureColorbuffer);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+
+    // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+    // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 int main()
@@ -308,6 +339,7 @@ int main()
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     setupTextures();
+    setupFrameBuffer();
 
     std::vector<Shader*> shaders;
 
@@ -328,7 +360,6 @@ int main()
 
     Shader particleShader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
     shaders.push_back(&particleShader);
-
 
     txShader.textNum = texture[0];
 
@@ -360,6 +391,7 @@ int main()
     particleCube myParticle(&particleShader, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
     renderers.push_back(&myParticle);
 
+    QuadRenderer fQuad(&txShader, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     // render loop
     // -----------
 
@@ -383,13 +415,15 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
+
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
         // render background
         // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         //glClearDepthf(999.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
-
 
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
         glm::vec4 lightPos = rotate * glm::vec4(-2, 0, 5.0, 1.0);
@@ -400,6 +434,16 @@ int main()
             r->render(vMat, pMat, deltaTime, lightPos);
         }
 
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_DEPTH_TEST);
+
+        unsigned int tempText = txShader.textNum;
+        txShader.textNum = textureColorbuffer;
+        fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
+        txShader.textNum = tempText;
         // draw imGui over the top
         drawIMGUI(shaders, &myQuad);
 
