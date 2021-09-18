@@ -23,7 +23,10 @@ void renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     myShader->use();
 
-    rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, myShader->textNum);
+
+    //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
     mvp = pMat * vMat * modelMatrix;
 
@@ -38,6 +41,11 @@ void renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     glBindVertexArray(VAO);
 
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
     if (indexCount < 0) {
         glDrawArrays(GL_TRIANGLES, 0, -indexCount);
     }
@@ -48,12 +56,12 @@ void renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 nCubeRenderer :: nCubeRenderer(Shader* shader, glm::mat4 m)
 {
     float vertices[216] = {
-          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-          -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
           -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+          -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
           -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
            0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
@@ -69,12 +77,12 @@ nCubeRenderer :: nCubeRenderer(Shader* shader, glm::mat4 m)
           -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
           -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+           0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
 
           -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
@@ -83,12 +91,13 @@ nCubeRenderer :: nCubeRenderer(Shader* shader, glm::mat4 m)
           -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
           -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+
+          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
           -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f
     };
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -193,8 +202,8 @@ QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
 {
     // ------------------------------------------------------------------
     unsigned int indices[6] = {  // note that we start from 0!
-        0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
+        3, 1, 0,  // first Triangle
+        3, 2, 1   // second Triangle
     };
     float vertices[24] = {
          0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,  // top right
@@ -246,12 +255,23 @@ QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
 CubeRenderer:: CubeRenderer(Shader* shader, glm::mat4 m)
 {
     float vertices[108] = {
-           -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
-            1.0f, -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
-            1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
-           -1.0f, -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
-           -1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,
-           -1.0f,  1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f
+           -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
+           1.0f, -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
+
+            1.0f, -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f, -1.0f, 
+            1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
+
+            1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 
+            -1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
+
+           -1.0f, -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,  1.0f, 
+           -1.0f, -1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
+
+           -1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f, 
+           1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,
+
+           -1.0f,  1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,  1.0f,  1.0f, 
+           1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f
     };
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -345,14 +365,22 @@ torus:: torus(Shader* shader, glm::mat4 m)
     for (int i = 0, n = 0; i < cs_sides; i++) {
         for (int j = 0; j < sides; j++) {
             {
-                indices.push_back(i * nextrow + j);
-                indices.push_back((i + 1) * nextrow + j);
+                //indices.push_back(i * nextrow + j);
+                //indices.push_back((i + 1) * nextrow + j);
+                //indices.push_back(i * nextrow + (j + 1));
+
                 indices.push_back(i * nextrow + (j + 1));
-            }
+                indices.push_back((i + 1) * nextrow + j);
+                indices.push_back(i * nextrow + j);}
+
             {
-                indices.push_back((i + 1) * nextrow + j);
-                indices.push_back((i + 1) * nextrow + (j + 1));
+                //indices.push_back((i + 1) * nextrow + j);
+                //indices.push_back((i + 1) * nextrow + (j + 1));
+                //indices.push_back(i * nextrow + (j + 1));
+
                 indices.push_back(i * nextrow + (j + 1));
+                indices.push_back((i + 1) * nextrow + (j + 1));
+                indices.push_back((i + 1) * nextrow + j);
             }
         }
     }
@@ -383,3 +411,261 @@ torus:: torus(Shader* shader, glm::mat4 m)
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(0);
 };
+
+unsigned int loadCubemap(std::vector<std::string> faces);
+
+skybox::skybox(Shader* shader, glm::mat4 m)
+{
+    float cubeVertexPositions[108] =
+    { -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, 1.0f,  1.0f, -1.0f, -1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, 1.0f, -1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f, 1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f, 1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f, -1.0f,  1.0f, -1.0f, -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f, 1.0f,  1.0f, -1.0f, 1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f,  1.0f, -1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f
+    };
+
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    modelMatrix = m;
+
+    myShader = shader;
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions), cubeVertexPositions, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    // load textures
+    // -------------
+    std::vector<std::string> faces
+    {
+        "data/cubemap/xp.jpg",
+        "data/cubemap/xn.jpg",
+        "data/cubemap/yp.jpg",
+        "data/cubemap/yn.jpg",
+        "data/cubemap/zp.jpg",
+        "data/cubemap/zn.jpg",
+    };
+    shader->textNum = loadCubemap(faces);
+}
+
+void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+{ // here's where the "actual drawing" gets done
+
+    glm::mat4 mvp;
+
+    myShader->use();
+    myShader->setInt("skybox", 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, myShader->textNum);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);	// cube is CW, but we are viewing the inside
+    glDisable(GL_DEPTH_TEST);
+
+    mvp = pMat * vMat;
+
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(vMat))));
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glEnable(GL_DEPTH_TEST);
+}
+
+void particleCube::setupIMatrices() {
+    unsigned int amount = 100;
+    iModelMatrices = new glm::mat4[amount];
+    for (unsigned int i = 0; i < amount; i++)
+    {
+        glm::mat4 model = glm::mat4(1.0f);
+
+        model = glm::translate(model, glm::vec3((rand() % 100) - 50, (rand() % 100) - 50, (rand() % 100) - 50));
+        model = glm::rotate(model, (float)rand(), glm::vec3((rand() % 100) - 50, (rand() % 100) - 50, (rand() % 100) - 50));
+
+        iModelMatrices[i] = model;
+    }
+
+    glBindVertexArray(VAO);
+
+    // configure instanced array
+    // -------------------------
+    unsigned int buffer;
+    glGenBuffers(1, &buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &iModelMatrices[0], GL_STATIC_DRAW);
+
+    // set transformation matrices as an instance vertex attribute (with divisor 1)
+    // -----------------------------------------------------------------------------------------------------------------------------------
+
+    // set attribute pointers for matrix (4 times vec4)
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+    glEnableVertexAttribArray(5);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+    glEnableVertexAttribArray(7);
+    glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+    glVertexAttribDivisor(4, 1);
+    glVertexAttribDivisor(5, 1);
+    glVertexAttribDivisor(6, 1);
+    glVertexAttribDivisor(7, 1);
+}
+
+particleCube::particleCube(Shader* shader, glm::mat4 m) {
+
+    
+    float vertexPositions[108] = 
+    {
+        // back face
+        1.0f, -1.0f, -1.0f,     // bottom right
+        -1.0f, -1.0f, -1.0f,    // bottom left
+        -1.0f,  1.0f, -1.0f,    // top left
+
+        -1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        1.0f,  1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f, 
+        1.0f, -1.0f, -1.0f,
+
+        1.0f,  1.0f, -1.0f,
+        1.0f,  1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+
+
+        1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+        1.0f, -1.0f,  1.0f,
+
+        1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+
+        1.0f,  1.0f,  1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f
+
+    };
+
+    float vertexNormals[108] = {
+         0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,
+         1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,
+         0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,
+        -1.0f,  0.0f,  0.0f,  -1.0f,  0.0f,  0.0f,  -1.0f,  0.0f,  0.0f,  -1.0f,  0.0f,  0.0f,  -1.0f,  0.0f,  0.0f,  -1.0f,  0.0f,  0.0f,
+         0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,
+         0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,
+    };
+    float texCoords[72] = {
+        1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
+        1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
+        1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
+        1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
+        1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
+        1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f
+    };
+
+    
+    modelMatrix = m;
+    myShader = shader;
+
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    unsigned int VTO = 0, VNO = 0;
+
+    // position attribute
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // normal attribute
+    glGenBuffers(1, &VNO);
+    glBindBuffer(GL_ARRAY_BUFFER, VNO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertexNormals), vertexNormals, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(1);
+
+    indexCount = -36; // since we have no indices, we tell the render call to use raw triangles by setting indexCount to -numVertices
+    
+    // texture attribute
+    glGenBuffers(1, &VTO);
+    glBindBuffer(GL_ARRAY_BUFFER, VTO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glEnableVertexAttribArray(2);
+
+    setupIMatrices();
+    glBindVertexArray(0);
+}
+
+void particleCube::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+{ // here's where the "actual drawing" gets done
+
+    glm::mat4 mvp;
+
+    myShader->use();
+
+    glUniform3f(glGetUniformLocation(myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+    glUniform3fv(glGetUniformLocation(myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
+
+    mvp = pMat * vMat * modelMatrix;
+
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+
+    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    glBindVertexArray(VAO);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 100);
+}

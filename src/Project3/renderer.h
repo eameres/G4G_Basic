@@ -33,7 +33,7 @@ public: void scale(const float scale[])
 }
 
 public: 
-    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+    virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };
 
 class nCubeRenderer : public renderer {
@@ -56,7 +56,26 @@ class CubeRenderer : public renderer {
 public:
     CubeRenderer(Shader* shader, glm::mat4 m);
 };
+
 class QuadRenderer : public renderer {
 public:
     QuadRenderer(Shader* shader, glm::mat4 m);
+};
+
+class skybox : public renderer {
+public:
+    skybox(Shader *shader, glm::mat4 m);
+public :
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+};
+
+class particleCube : public renderer {
+public:
+    glm::mat4* iModelMatrices;
+public:
+    particleCube(Shader* shader, glm::mat4 m);
+public:
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+private:
+    void setupIMatrices(void);
 };

@@ -40,7 +40,7 @@ Camera camera;
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
-unsigned int texture[] = { 0,1 };
+unsigned int texture[] = { 0,1,2,3 };
 
 // image buffer used by raster drawing basics.cpp
 extern unsigned char imageBuff[512][512][3];
@@ -52,9 +52,50 @@ int RayTracer();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-void setupTexture(unsigned int tNum) 
+
+// loads a cubemap texture from 6 individual texture faces
+// order:
+// +X (right)
+// -X (left)
+// +Y (top)
+// -Y (bottom)
+// +Z (front) 
+// -Z (back)
+// -------------------------------------------------------
+unsigned int loadCubemap(std::vector<std::string> faces)
 {
-    glBindTexture(GL_TEXTURE_2D, texture[tNum]); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    unsigned int tNum;
+    glGenTextures(1, &tNum);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tNum);
+
+    int width, height, nrComponents;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrComponents, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+    return tNum;
+}
+
+void setupTexture(unsigned int tNum,const void *buff,int x,int y, unsigned int fmt) 
+{
+    glBindTexture(GL_TEXTURE_2D, tNum); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
     // set the texture wrapping parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -64,21 +105,33 @@ void setupTexture(unsigned int tNum)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     // load image, create texture and generate mipmaps
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, (const void*)imageBuff);
+    glTexImage2D(GL_TEXTURE_2D, 0, fmt, x, y, 0, fmt, GL_UNSIGNED_BYTE, buff);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 void setupTextures()
 {
     // create textures 
     // -------------------------
-    glGenTextures(2, texture);
+    glGenTextures(3, texture);
 
     myTexture();
-    setupTexture(0);
+    setupTexture(texture[0], (const void*)imageBuff,512,512,GL_RGB);
     // texture is a buffer we will be generating for pixel experiments
 
     RayTracer();
-    setupTexture(1);
+    setupTexture(texture[1], (const void*)imageBuff,512, 512, GL_RGB);
+
+    // load image, create texture and generate mipmaps
+    int width = 0, height = 0, nrChannels = 0;
+
+    stbi_set_flip_vertically_on_load(true);
+
+    unsigned char* data = stbi_load("data/spstob_1.jpg", &width, &height, &nrChannels, 0);
+
+    setupTexture(texture[2], (const void*)data, width, height, nrChannels == 4 ? GL_RGBA : GL_RGB);
+    
+    stbi_image_free(data);
+    stbi_set_flip_vertically_on_load(false);
 }
 
 void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
@@ -110,9 +163,10 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
+        Shader* gShader = shaders[0];
+
         if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
         {
-            Shader* gShader = shaders[0];
 
             for (Shader* s : shaders) {
                 if (ImGui::BeginTabItem(s->name))
@@ -143,8 +197,9 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
             if (ImGui::Button("Save Shaders"))
                gShader->saveShaders();
 
-            ImGui::SameLine(); if (ImGui::Button("Texture 0")) glBindTexture(GL_TEXTURE_2D, texture[0]);
-            ImGui::SameLine(); if (ImGui::Button("Texture 1")) glBindTexture(GL_TEXTURE_2D, texture[1]);
+            //ImGui::SameLine(); if (ImGui::Button("Texture 0")) gShader->textNum = texture[0];
+            //ImGui::SameLine(); if (ImGui::Button("Texture 1")) gShader->textNum = texture[1];
+            //ImGui::SameLine(); if (ImGui::Button("Texture 2")) gShader->textNum = texture[2];
 
         }
 
@@ -164,7 +219,7 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
         ImGui::Text("Camera Matrix");
         ImGui::SameLine(); ImGui::Checkbox("AutoPan", &autoPan);
         // values we'll use to derive a model matrix
-        ImGui::DragFloat3("vTranslate", v_transVec,.01f, -6.0f, 6.0f);
+        ImGui::DragFloat3("vTranslate", v_transVec,.1f, -100.0f, 100.0f);
         ImGui::InputFloat3("vAxis", v_axis,"%.2f");
         
         if (!autoPan)
@@ -178,12 +233,18 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
         vMat = glm::mat4(1.0f);
         vMat = glm::translate(glm::mat4(1.0f), -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
         vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
-        
-        // show the texture that we generated
-        ImGui::Image((void*)(intptr_t)texture[0], ImVec2(64, 64));
-        ImGui::SameLine(); ImGui::Image((void*)(intptr_t)texture[1], ImVec2(64, 64));
 
-        //ImGui::ShowDemoWindow(); // easter agg!  show the ImGui demo window
+        for (int i = 0; i < 3; i++)
+        {
+            ImGui::PushID(i);
+
+            if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
+                gShader->textNum = texture[i];
+            ImGui::PopID();
+            ImGui::SameLine();
+        }
+
+        //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
 
         ImGui::End();
 
@@ -246,6 +307,8 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
+    setupTextures();
+
     std::vector<Shader*> shaders;
 
     Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl","base"); // declare and intialize our base shader
@@ -260,7 +323,14 @@ int main()
     Shader flShader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit"); // declare and intialize shader with ADS lighting
     shaders.push_back(&flShader);
 
-    setupTextures();
+    Shader skyShader("data/vSky.lgsl", "data/fSky.lgsl", "Skybox"); // declare and intialize skybox shader
+    shaders.push_back(&skyShader);
+
+    Shader particleShader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
+    shaders.push_back(&particleShader);
+
+
+    txShader.textNum = texture[0];
 
     // set up the perspective and the camera
     pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
@@ -268,20 +338,27 @@ int main()
     // pave the way for "scene" rendering
     std::vector<renderer*> renderers;
 
-    QuadRenderer myQuad(shaders[1], glm::mat4(1.0f)); // our "first quad"
+    
+    skybox mySky(&skyShader, glm::mat4(1.0f)); // our "first quad"
+    renderers.push_back(&mySky); // add it to the render list
+
+    QuadRenderer myQuad(&tShader, glm::mat4(1.0f)); // our "first quad"
     renderers.push_back(&myQuad); // add it to the render list
     
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
 
-    objMesh shuttle(shaders[3], tf2);
+    objMesh shuttle(&txShader, tf2);
     renderers.push_back(&shuttle);
 
-    nCubeRenderer myCube2(shaders[3], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
+    nCubeRenderer myCube2(&flShader, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
     renderers.push_back(&myCube2);
 
-    torus myTorus(shaders[3], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    torus myTorus(&flShader, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     renderers.push_back(&myTorus);
+    
+    particleCube myParticle(&particleShader, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    renderers.push_back(&myParticle);
 
     // render loop
     // -----------
