@@ -15,7 +15,6 @@ public:
     const char* vertexPath;
     const char* fragmentPath;
     const char* name;
-    unsigned int textNum;
 
 public:
     char vtext[1024], ftext[1024];

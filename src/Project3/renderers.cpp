@@ -21,23 +21,20 @@ void renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     glm::mat4 mvp;
 
-    myShader->use();
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, myShader->textNum);
+    myMaterial->use();
 
     //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
     mvp = pMat * vMat * modelMatrix;
 
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
-    glUniform3f(glGetUniformLocation(myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
-    glUniform3fv(glGetUniformLocation(myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
+    glUniform3f(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
     glBindVertexArray(VAO);
 
@@ -53,7 +50,7 @@ void renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 }
 
-nCubeRenderer :: nCubeRenderer(Shader* shader, glm::mat4 m)
+nCubeRenderer :: nCubeRenderer(Material* material, glm::mat4 m)
 {
     float vertices[216] = {
            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
@@ -102,7 +99,7 @@ nCubeRenderer :: nCubeRenderer(Shader* shader, glm::mat4 m)
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -132,12 +129,12 @@ nCubeRenderer :: nCubeRenderer(Shader* shader, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-objMesh:: objMesh(Shader* shader, glm::mat4 m)
+objMesh:: objMesh(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
@@ -198,7 +195,7 @@ objMesh:: objMesh(Shader* shader, glm::mat4 m)
     glBindVertexArray(0);
 };
 
-QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
+QuadRenderer:: QuadRenderer(Material* material, glm::mat4 m)
 {
     // ------------------------------------------------------------------
     unsigned int indices[6] = {  // note that we start from 0!
@@ -206,17 +203,17 @@ QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
         0, 2, 3   // second Triangle
     };
     float vertices[44] = {
-        // positions            // colors           // texture coords   // normals
-         0.5f,  0.5f, 0.0f,     1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-         0.5f,  -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-         -0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f, // top left 
-         -0.5f,  -0.5f, 0.0f,   1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f  // bottom left
+        // positions           // colors           // texture coords   // normals
+         0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+         0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+        -0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f, // top left 
+        -0.5f, -0.5f, 0.0f,    1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f  // bottom left
     };
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -261,7 +258,7 @@ QuadRenderer:: QuadRenderer(Shader* shader, glm::mat4 m)
     glBindVertexArray(0);
 };
 
-CubeRenderer:: CubeRenderer(Shader* shader, glm::mat4 m)
+CubeRenderer:: CubeRenderer(Material* material, glm::mat4 m)
 {
     float vertices[108] = {
            -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
@@ -285,7 +282,7 @@ CubeRenderer:: CubeRenderer(Shader* shader, glm::mat4 m)
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -310,12 +307,12 @@ CubeRenderer:: CubeRenderer(Shader* shader, glm::mat4 m)
     glBindVertexArray(0);
 };
 
-torus:: torus(Shader* shader, glm::mat4 m)
+torus:: torus(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
@@ -374,19 +371,11 @@ torus:: torus(Shader* shader, glm::mat4 m)
     for (int i = 0, n = 0; i < cs_sides; i++) {
         for (int j = 0; j < sides; j++) {
             {
-                //indices.push_back(i * nextrow + j);
-                //indices.push_back((i + 1) * nextrow + j);
-                //indices.push_back(i * nextrow + (j + 1));
-
                 indices.push_back(i * nextrow + (j + 1));
                 indices.push_back((i + 1) * nextrow + j);
                 indices.push_back(i * nextrow + j);}
 
             {
-                //indices.push_back((i + 1) * nextrow + j);
-                //indices.push_back((i + 1) * nextrow + (j + 1));
-                //indices.push_back(i * nextrow + (j + 1));
-
                 indices.push_back(i * nextrow + (j + 1));
                 indices.push_back((i + 1) * nextrow + (j + 1));
                 indices.push_back((i + 1) * nextrow + j);
@@ -421,9 +410,7 @@ torus:: torus(Shader* shader, glm::mat4 m)
     glBindVertexArray(0);
 };
 
-unsigned int loadCubemap(std::vector<std::string> faces);
-
-skybox::skybox(Shader* shader, glm::mat4 m)
+skybox::skybox(Material* material, glm::mat4 m)
 {
     float cubeVertexPositions[108] =
     { -1.0f,  1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
@@ -443,7 +430,7 @@ skybox::skybox(Shader* shader, glm::mat4 m)
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -453,19 +440,6 @@ skybox::skybox(Shader* shader, glm::mat4 m)
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions), cubeVertexPositions, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
-
-    // load textures
-    // -------------
-    std::vector<std::string> faces
-    {
-        "data/cubemap/xp.jpg",
-        "data/cubemap/xn.jpg",
-        "data/cubemap/yp.jpg",
-        "data/cubemap/yn.jpg",
-        "data/cubemap/zp.jpg",
-        "data/cubemap/zn.jpg",
-    };
-    shader->textNum = loadCubemap(faces);
 }
 
 void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
@@ -473,11 +447,11 @@ void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 
 
     glm::mat4 mvp;
 
-    myShader->use();
-    myShader->setInt("skybox", 0);
+    myMaterial->use();
+    myMaterial->myShader->setInt("skybox", 0);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, myShader->textNum);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, myMaterial->texture);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -486,11 +460,11 @@ void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 
 
     mvp = pMat * vMat;
 
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(vMat))));
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(vMat))));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -498,7 +472,7 @@ void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 
 }
 
 void particleCube::setupIMatrices() {
-    unsigned int amount = 100;
+    unsigned int amount = 1000;
     iModelMatrices = new glm::mat4[amount];
     for (unsigned int i = 0; i < amount; i++)
     {
@@ -538,7 +512,7 @@ void particleCube::setupIMatrices() {
     glVertexAttribDivisor(7, 1);
 }
 
-particleCube::particleCube(Shader* shader, glm::mat4 m) {
+particleCube::particleCube(Material* material, glm::mat4 m) {
 
     
     float vertexPositions[108] = 
@@ -617,7 +591,7 @@ particleCube::particleCube(Shader* shader, glm::mat4 m) {
 
     
     modelMatrix = m;
-    myShader = shader;
+    myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -657,18 +631,18 @@ void particleCube::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm:
 
     glm::mat4 mvp;
 
-    myShader->use();
+    myMaterial->use();
 
-    glUniform3f(glGetUniformLocation(myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
-    glUniform3fv(glGetUniformLocation(myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
+    glUniform3f(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
     mvp = pMat * vMat * modelMatrix;
 
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -676,5 +650,5 @@ void particleCube::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm:
     glFrontFace(GL_CCW);
 
     glBindVertexArray(VAO);
-    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 100);
+    glDrawArraysInstanced(GL_TRIANGLES, 0, 36, 1000);
 }

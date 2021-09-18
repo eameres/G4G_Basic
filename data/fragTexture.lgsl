@@ -8,6 +8,6 @@ in vec2 TexCoord;
 
 void main()
 {
-	vec4 myCol = vec4(1.0f,1.0f,0.0f,1.0f);
+	vec4 myCol = ourColor;
    FragColor = mix(myCol,texture(ourTexture, TexCoord),1.0);
 }

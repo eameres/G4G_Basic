@@ -107,6 +107,7 @@ void setupTexture(unsigned int tNum,const void *buff,int x,int y, unsigned int f
     // load image, create texture and generate mipmaps
     glTexImage2D(GL_TEXTURE_2D, 0, fmt, x, y, 0, fmt, GL_UNSIGNED_BYTE, buff);
     glGenerateMipmap(GL_TEXTURE_2D);
+
 }
 void setupTextures()
 {
@@ -132,6 +133,19 @@ void setupTextures()
     
     stbi_image_free(data);
     stbi_set_flip_vertically_on_load(false);
+
+    // load textures
+// -------------
+    std::vector<std::string> faces
+    {
+        "data/cubemap/xp.jpg",
+        "data/cubemap/xn.jpg",
+        "data/cubemap/yp.jpg",
+        "data/cubemap/yn.jpg",
+        "data/cubemap/zp.jpg",
+        "data/cubemap/zn.jpg",
+    };
+    texture[3] = loadCubemap(faces);
 }
 
 
@@ -139,7 +153,7 @@ unsigned int framebuffer;
 unsigned int textureColorbuffer;
 unsigned int textureDepthbuffer;
 
-void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
+void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer,Material *material) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -239,11 +253,12 @@ void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer) {
             ImGui::PushID(i);
 
             if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
-                gShader->textNum = texture[i];
+                material->texture = texture[i];
             ImGui::PopID();
             ImGui::SameLine();
         }
 
+        ImGui::NewLine();
         //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
 
         ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(256, 256));
@@ -272,13 +287,14 @@ void setupFrameBuffer() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-
+    
     // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
     unsigned int rbo;
     glGenRenderbuffers(1, &rbo);
     glBindRenderbuffer(GL_RENDERBUFFER, rbo);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+    
     // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
@@ -361,37 +377,46 @@ int main()
     Shader particleShader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
     shaders.push_back(&particleShader);
 
-    txShader.textNum = texture[0];
-
     // set up the perspective and the camera
     pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
 
     // pave the way for "scene" rendering
     std::vector<renderer*> renderers;
 
+    Material shuttleMaterial(&txShader,texture[2],glm::vec4(-1.0));
+    Material yellow(&ourShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material checkers(&txShader,texture[0], glm::vec4(-1.0));
+    Material background(&skyShader,texture[3], glm::vec4(-1.0));
+    Material pMaterial(&particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
+    Material coloredVerts(&tShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material litMaterial(&flShader, -1, glm::vec4(1.0, 0.0, 1.0, 1.0));
+    Material offScreenMaterial(&txShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
-    skybox mySky(&skyShader, glm::mat4(1.0f)); // our "first quad"
+    skybox mySky(&background, glm::mat4(1.0f)); // our "first quad"
     renderers.push_back(&mySky); // add it to the render list
 
-    QuadRenderer myQuad(&tShader, glm::mat4(1.0f)); // our "first quad"
-    renderers.push_back(&myQuad); // add it to the render list
+    QuadRenderer myQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
+    renderers.push_back(&myQuad); // add it to the render list   
+
+    QuadRenderer myQuad2(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(),glm::vec3(1.0,0.0,0.0))); // our "second quad"
+    renderers.push_back(&myQuad2); // add it to the render list
     
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
 
-    objMesh shuttle(&txShader, tf2);
+    objMesh shuttle(&shuttleMaterial, tf2);
     renderers.push_back(&shuttle);
 
-    nCubeRenderer myCube2(&flShader, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
+    nCubeRenderer myCube2(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
     renderers.push_back(&myCube2);
 
-    torus myTorus(&flShader, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    torus myTorus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     renderers.push_back(&myTorus);
     
-    particleCube myParticle(&particleShader, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    particleCube myParticle(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
     renderers.push_back(&myParticle);
 
-    QuadRenderer fQuad(&txShader, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
+    QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     // render loop
     // -----------
 
@@ -414,7 +439,6 @@ int main()
         // input
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
-
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
@@ -440,12 +464,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
-        unsigned int tempText = txShader.textNum;
-        txShader.textNum = textureColorbuffer;
         fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
-        txShader.textNum = tempText;
+
         // draw imGui over the top
-        drawIMGUI(shaders, &myQuad);
+        drawIMGUI(shaders, &myQuad,&checkers);
 
         glfwSwapBuffers(window);
     }

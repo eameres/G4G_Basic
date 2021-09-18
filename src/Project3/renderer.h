@@ -2,6 +2,32 @@
 #include "shader_s.h"
 
 #pragma once
+
+class Material {
+public:
+    Shader* myShader;
+    GLint texture;
+
+    glm::vec4 color;
+
+public:
+    Material(Shader* _shader, GLint _texture, glm::vec4 _color) {
+        myShader = _shader;
+        texture = _texture;
+        color = _color;
+    }
+
+    void use() {
+
+        myShader->use();
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+
+        glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));
+    }
+};
+
 class renderer {
 
 protected:
@@ -10,7 +36,7 @@ protected:
 
     glm::mat4 modelMatrix;
 
-    Shader* myShader;
+    Material* myMaterial;
 
 public: void setXForm(glm::mat4 mat)
 {
@@ -39,32 +65,32 @@ public:
 class nCubeRenderer : public renderer {
     // ------------------------------------------------------------------
 public:
-    nCubeRenderer(Shader* shader, glm::mat4 m);
+    nCubeRenderer(Material*, glm::mat4 m);
 };
 
 class objMesh : public renderer {
 public:
-    objMesh(Shader* shader, glm::mat4 m);
+    objMesh(Material*, glm::mat4 m);
 };
 
 class torus : public renderer {
 public:
-    torus(Shader* shader, glm::mat4 m);
+    torus(Material*, glm::mat4 m);
 };
 
 class CubeRenderer : public renderer {
 public:
-    CubeRenderer(Shader* shader, glm::mat4 m);
+    CubeRenderer(Material*, glm::mat4 m);
 };
 
 class QuadRenderer : public renderer {
 public:
-    QuadRenderer(Shader* shader, glm::mat4 m);
+    QuadRenderer(Material*, glm::mat4 m);
 };
 
 class skybox : public renderer {
 public:
-    skybox(Shader *shader, glm::mat4 m);
+    skybox(Material*, glm::mat4 m);
 public :
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };
@@ -73,9 +99,10 @@ class particleCube : public renderer {
 public:
     glm::mat4* iModelMatrices;
 public:
-    particleCube(Shader* shader, glm::mat4 m);
+    particleCube(Material*, glm::mat4 m);
 public:
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 private:
     void setupIMatrices(void);
 };
+
