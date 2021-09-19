@@ -27,9 +27,7 @@
 
 #include "camera.h"
 #include "renderer.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include "textures.h"
 
 #include "drawImGui.hpp"
 
@@ -44,118 +42,13 @@ const unsigned int SCR_HEIGHT = 720;
 
 unsigned int texture[] = { 0,1,2,3 };
 
-// image buffer used by raster drawing basics.cpp
-extern unsigned char imageBuff[512][512][3];
-
-int myTexture();
-int RayTracer();
-
 #pragma warning( disable : 26451 )
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-
-// loads a cubemap texture from 6 individual texture faces
-// order:
-// +X (right)
-// -X (left)
-// +Y (top)
-// -Y (bottom)
-// +Z (front) 
-// -Z (back)
-// -------------------------------------------------------
-unsigned int loadCubemap(std::vector<std::string> faces)
-{
-    unsigned int tNum;
-    glGenTextures(1, &tNum);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, tNum);
-
-    int width, height, nrComponents;
-    for (unsigned int i = 0; i < faces.size(); i++)
-    {
-        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrComponents, 0);
-        if (data)
-        {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-            stbi_image_free(data);
-        }
-        else
-        {
-            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
-            stbi_image_free(data);
-        }
-    }
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-
-    return tNum;
-}
-
-void setupTexture(unsigned int tNum,const void *buff,int x,int y, unsigned int fmt) 
-{
-    glBindTexture(GL_TEXTURE_2D, tNum); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    // set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    // load image, create texture and generate mipmaps
-    glTexImage2D(GL_TEXTURE_2D, 0, fmt, x, y, 0, fmt, GL_UNSIGNED_BYTE, buff);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-}
-void setupTextures()
-{
-    // create textures 
-    // -------------------------
-    glGenTextures(3, texture);
-
-    myTexture();
-    setupTexture(texture[0], (const void*)imageBuff,512,512,GL_RGB);
-    // texture is a buffer we will be generating for pixel experiments
-
-    RayTracer();
-    setupTexture(texture[1], (const void*)imageBuff,512, 512, GL_RGB);
-
-    // load image, create texture and generate mipmaps
-    int width = 0, height = 0, nrChannels = 0;
-
-    stbi_set_flip_vertically_on_load(true);
-
-    unsigned char* data = stbi_load("data/spstob_1.jpg", &width, &height, &nrChannels, 0);
-
-    setupTexture(texture[2], (const void*)data, width, height, nrChannels == 4 ? GL_RGBA : GL_RGB);
-    
-    stbi_image_free(data);
-    stbi_set_flip_vertically_on_load(false);
-
-    // load textures
-// -------------
-    std::vector<std::string> faces
-    {
-        "data/cubemap/xp.jpg",
-        "data/cubemap/xn.jpg",
-        "data/cubemap/yp.jpg",
-        "data/cubemap/yn.jpg",
-        "data/cubemap/zp.jpg",
-        "data/cubemap/zn.jpg",
-    };
-    texture[3] = loadCubemap(faces);
-}
-
-
 unsigned int framebuffer;
 unsigned int textureColorbuffer;
 unsigned int textureDepthbuffer;
-
-
 
 void setupFrameBuffer() {
     // framebuffer configuration
@@ -240,7 +133,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    setupTextures();
+    setupTextures(texture);
     setupFrameBuffer();
 
     std::vector<Shader*> shaders;   // pave the way for "scene" rendering
@@ -269,12 +162,12 @@ int main()
     Shader particleShader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
     shaders.push_back(&particleShader);
     
-    Material yellow(&ourShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material white(&ourShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
     Material coloredVerts(&tShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     Material pMaterial(&particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
-    Material litMaterial(&flShader, -1, glm::vec4(1.0, 0.0, 1.0, 1.0));
+    Material litMaterial(&flShader, -1, glm::vec4(0.0, 1.0, 1.0, 1.0));
     Material background(&skyShader,texture[3], glm::vec4(-1.0));
-    Material shuttleMaterial(&txShader,texture[2],glm::vec4(-1.0));
+    Material shuttleMaterial(&txShader,texture[2], glm::vec4(0.0,0.5, 1.0, 1.0));
     Material checkers(&txShader,texture[0], glm::vec4(-1.0));
     Material offScreenMaterial(&txShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
@@ -300,11 +193,13 @@ int main()
     renderers.push_back(&myTorus);
     
     Renderer *pCube = new particleCube(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-
     renderers.push_back(pCube);
    
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     
+    nCubeRenderer lightCube(&white, glm::mat4(0.33f));
+    renderers.push_back(&lightCube);
+
     // render loop
     // -----------
 
@@ -340,7 +235,9 @@ int main()
         glEnable(GL_DEPTH_TEST);
 
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
-        glm::vec4 lightPos = rotate * glm::vec4(-2, 0, 5.0, 1.0);
+        glm::vec4 lightPos = rotate * glm::vec4(-2, 0, 2.0, 1.0);
+
+        lightCube.setTranslate((glm::vec3)lightPos);
 
         // call each of the queued renderers
         for(Renderer *r : renderers)

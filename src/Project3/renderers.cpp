@@ -50,6 +50,23 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
 }
 
+void Renderer::setupColorAttrib() {
+    // color attribute
+
+    float color[3];
+
+    color[0] = glm::value_ptr(myMaterial->color)[0];
+    color[1] = glm::value_ptr(myMaterial->color)[1];
+    color[2] = glm::value_ptr(myMaterial->color)[2];
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(float), color, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(2);
+    glVertexAttribDivisor(2, 1);
+}
+
 nCubeRenderer :: nCubeRenderer(Material* material, glm::mat4 m)
 {
     float vertices[216] = {
@@ -96,19 +113,20 @@ nCubeRenderer :: nCubeRenderer(Material* material, glm::mat4 m)
           -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f
     };
+
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
     myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(2, VBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     // vertex buffer object, simple version, just coordinates
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // position attribute 
@@ -118,6 +136,8 @@ nCubeRenderer :: nCubeRenderer(Material* material, glm::mat4 m)
     // normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
+
+    setupColorAttrib();
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -140,7 +160,7 @@ objMesh:: objMesh(Material* material, glm::mat4 m)
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
-    glGenBuffers(1, &VBO);
+    glGenBuffers(2, VBO);
     glGenBuffers(1, &EBO);
 
     ImportedModel myModel("data/shuttle.obj_");
@@ -158,12 +178,15 @@ objMesh:: objMesh(Material* material, glm::mat4 m)
         vbovalues.push_back((vert[i]).x);
         vbovalues.push_back((vert[i]).y);
         vbovalues.push_back((vert[i]).z);
+
         vbovalues.push_back(norm[i].x);
         vbovalues.push_back(norm[i].y);
         vbovalues.push_back(norm[i].z);
-        vbovalues.push_back(0.0f);
-        vbovalues.push_back(0.0f);
-        vbovalues.push_back(1.0f);
+        
+        //vbovalues.push_back(0.0f);
+        //vbovalues.push_back(0.0f);
+        //vbovalues.push_back(1.0f);
+        
         vbovalues.push_back((tex[i]).s);
         vbovalues.push_back((tex[i]).t);
         indices.push_back(i);
@@ -171,26 +194,25 @@ objMesh:: objMesh(Material* material, glm::mat4 m)
 
     indexCount = indices.size();
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, vbovalues.size() * 4, &vbovalues[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * 4, &indices[0], GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // normal vector attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // color attribute
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
     // texture coord attribute
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float)));
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(3);
+
+    setupColorAttrib();
 
     glBindVertexArray(0);
 };
@@ -203,11 +225,11 @@ QuadRenderer:: QuadRenderer(Material* material, glm::mat4 m)
         0, 2, 3   // second Triangle
     };
     float vertices[44] = {
-        // positions           // colors           // texture coords   // normals
-         0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
-         0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
-        -0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,   0.0f, 1.0f, // top left 
-        -0.5f, -0.5f, 0.0f,    1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f  // bottom left
+        // positions           // normal           // color             // texture
+         0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,    1.0f, 1.0f,     // top right
+         0.5f, -0.5f, 0.0f,    0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 1.0f,    1.0f, 0.0f,     // bottom right
+        -0.5f,  0.5f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f, 1.0f,    0.0f, 1.0f,     // top left 
+        -0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 1.0f, 1.0f,    0.0f, 0.0f      // bottom left
     };
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -216,24 +238,25 @@ QuadRenderer:: QuadRenderer(Material* material, glm::mat4 m)
     myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, VBO);
     glGenBuffers(1, &EBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     // vertex buffer object, simple version, just coordinates
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    // color attribute
+
+    // normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // normal attribute
+    // color attribute
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
@@ -285,13 +308,13 @@ CubeRenderer:: CubeRenderer(Material* material, glm::mat4 m)
     myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, VBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
     // vertex buffer object, simple version, just coordinates
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -318,7 +341,7 @@ torus:: torus(Material* material, glm::mat4 m)
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
-    glGenBuffers(1, &VBO);
+    glGenBuffers(2, VBO);
     glGenBuffers(1, &EBO);
 
     std::vector<float> verts;
@@ -354,10 +377,6 @@ torus:: torus(Material* material, glm::mat4 m)
             verts.push_back(currentradius * sinf(i) - radius * sin(i));
             verts.push_back(zval);
 
-            verts.push_back(1.0);
-            verts.push_back(0.0);
-            verts.push_back(0.0);
-
             float u = (float)i * 4.0f / twoPi;
             float v = ((float)j * 4.0f) / twoPi;
 
@@ -385,26 +404,25 @@ torus:: torus(Material* material, glm::mat4 m)
 
     indexCount = indices.size();
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, verts.size() * 4, &verts[0], GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * 4, &indices[0], GL_STATIC_DRAW);
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // normal vector attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // color attribute
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
     // texture coord attribute
-    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float)));
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(3);
+
+    setupColorAttrib();
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBindVertexArray(0);
@@ -433,10 +451,10 @@ skybox::skybox(Material* material, glm::mat4 m)
     myMaterial = material;
 
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    glGenBuffers(1, VBO);
 
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions), cubeVertexPositions, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
@@ -474,8 +492,12 @@ void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 
 void particleCube::setupIMatrices() {
     unsigned int amount = 1000;
     iModelMatrices = new glm::mat4[amount];
+    iModelColors = new glm::vec3[amount];
+
     for (unsigned int i = 0; i < amount; i++)
     {
+
+        iModelColors[i] = glm::vec3((float)(rand() % 100) / 100.0f, (float)(rand() % 100) / 100.0f, (float)(rand() % 100) / 100.0f);
         glm::mat4 model = glm::mat4(1.0f);
 
         model = glm::translate(model, glm::vec3((rand() % 100) - 50, (rand() % 100) - 50, (rand() % 100) - 50));
@@ -488,12 +510,10 @@ void particleCube::setupIMatrices() {
 
     // configure instanced array
     // -------------------------
-    unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[4]);
     glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &iModelMatrices[0], GL_STATIC_DRAW);
 
-    // set transformation matrices as an instance vertex attribute (with divisor 1)
+    // set transformation matrices and color as an instance vertex attribute (with divisor 1)
     // -----------------------------------------------------------------------------------------------------------------------------------
 
     // set attribute pointers for matrix (4 times vec4)
@@ -510,6 +530,15 @@ void particleCube::setupIMatrices() {
     glVertexAttribDivisor(5, 1);
     glVertexAttribDivisor(6, 1);
     glVertexAttribDivisor(7, 1);
+
+    {   // setup color per instance
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+        glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::vec3), &iModelColors[0], GL_STATIC_DRAW);
+
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(2);
+        glVertexAttribDivisor(2, 1);
+    }
 }
 
 particleCube::particleCube(Material* material, glm::mat4 m) {
@@ -596,19 +625,16 @@ particleCube::particleCube(Material* material, glm::mat4 m) {
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
-    unsigned int VTO = 0, VNO = 0;
-
     // position attribute
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glGenBuffers(5, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // normal attribute
-    glGenBuffers(1, &VNO);
-    glBindBuffer(GL_ARRAY_BUFFER, VNO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertexNormals), vertexNormals, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(1);
@@ -616,13 +642,14 @@ particleCube::particleCube(Material* material, glm::mat4 m) {
     indexCount = -36; // since we have no indices, we tell the render call to use raw triangles by setting indexCount to -numVertices
     
     // texture attribute
-    glGenBuffers(1, &VTO);
-    glBindBuffer(GL_ARRAY_BUFFER, VTO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), texCoords, GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(2);
 
+    setupColorAttrib();
     setupIMatrices();
+
     glBindVertexArray(0);
 }
 

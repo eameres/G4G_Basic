@@ -10,8 +10,13 @@ uniform mat4 p,v,m;
 out vec3 FragPos;
 out vec3 Normal;
 
+uniform vec4 ourColor;
+
+out vec4 varyingColor;
+
 void main()
 {
+	varyingColor = vec4(aColor,1.0);
 	mat4 newM = m * iMat;
     FragPos = vec3(newM * vec4(aPos, 1.0));
     Normal = mat3(transpose(inverse(newM))) * aNormal;  

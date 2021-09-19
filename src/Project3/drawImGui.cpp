@@ -125,7 +125,7 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
         if (!autoPan)
             ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
         else
-            v_angle = fmod(glfwGetTime(), glm::pi<float>() *2.0) - glm::pi<float>();
+            v_angle = fmod(glfwGetTime()/4.0f, glm::pi<float>() *2.0) - glm::pi<float>();
 
         ImGui::DragFloat("Zoom", &(camera.Zoom), .5f,12.0f, 120.0f);
         pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees

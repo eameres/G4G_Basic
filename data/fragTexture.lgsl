@@ -5,9 +5,11 @@ uniform vec4 ourColor;
 
 uniform sampler2D ourTexture;
 in vec2 TexCoord;
+in vec4 varyingColor;
 
 void main()
 {
 	vec4 myCol = ourColor;
    FragColor = mix(myCol,texture(ourTexture, TexCoord),1.0);
+   //FragColor = varyingColor;
 }

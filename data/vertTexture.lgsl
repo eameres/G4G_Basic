@@ -10,9 +10,11 @@ uniform mat4 v; // view
 uniform mat4 p; // perspective
 
 out vec2 TexCoord;
+out vec4 varyingColor;
 
 void main()
 {
 	TexCoord = uv.xy;
+	varyingColor = vec4(aCol,1.0);
 	gl_Position = p*v*m*vec4(aPos, 1.0);
 }
