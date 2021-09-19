@@ -16,7 +16,7 @@
 #include "renderer.h"
 #include "ImportedModel.h"
 
-void renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;

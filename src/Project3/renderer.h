@@ -28,7 +28,7 @@ public:
     }
 };
 
-class renderer {
+class Renderer {
 
 protected:
     unsigned int VBO = 0, VAO = 0, EBO = 0;
@@ -62,40 +62,40 @@ public:
     virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };
 
-class nCubeRenderer : public renderer {
+class nCubeRenderer : public Renderer {
     // ------------------------------------------------------------------
 public:
     nCubeRenderer(Material*, glm::mat4 m);
 };
 
-class objMesh : public renderer {
+class objMesh : public Renderer {
 public:
     objMesh(Material*, glm::mat4 m);
 };
 
-class torus : public renderer {
+class torus : public Renderer {
 public:
     torus(Material*, glm::mat4 m);
 };
 
-class CubeRenderer : public renderer {
+class CubeRenderer : public Renderer {
 public:
     CubeRenderer(Material*, glm::mat4 m);
 };
 
-class QuadRenderer : public renderer {
+class QuadRenderer : public Renderer {
 public:
     QuadRenderer(Material*, glm::mat4 m);
 };
 
-class skybox : public renderer {
+class skybox : public Renderer {
 public:
     skybox(Material*, glm::mat4 m);
 public :
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };
 
-class particleCube : public renderer {
+class particleCube : public Renderer {
 public:
     glm::mat4* iModelMatrices;
 public:

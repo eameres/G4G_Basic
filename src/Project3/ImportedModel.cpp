@@ -1,6 +1,7 @@
+#include <glm/glm.hpp>
+
 #include <fstream>
 #include <sstream>
-#include <glm\glm.hpp>
 
 #include "ImportedModel.h"
 

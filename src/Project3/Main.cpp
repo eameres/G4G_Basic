@@ -31,6 +31,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include "drawImGui.hpp"
+
 glm::mat4 pMat; // perspective matrix
 glm::mat4 vMat; // view matrix
 
@@ -153,123 +155,6 @@ unsigned int framebuffer;
 unsigned int textureColorbuffer;
 unsigned int textureDepthbuffer;
 
-void drawIMGUI(std::vector<Shader*> shaders, renderer *myRenderer,Material *material) {
-    // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-    {
-        // used to get values from imGui to the model matrix
-        static float axis[] = { 0.0f,0.0f,1.0f };
-        static float angle = 0.0f;
-
-        static float transVec[] = { 0.0f,0.0f,0.0f };
-        static float scaleVec[] = { 1.0f,1.0f,1.0f };
-
-        // used to get values from imGui to the camera (view) matrix
-        static float v_axis[] = { 0.0f,1.0f,0.0f };
-        static float v_angle = 0.0f;
-
-        static float v_transVec[] = { 0.0f,0.0f,3.0f };
-        
-        static bool autoPan = false;
-        
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-
-        ImGui::Begin("Graphics For Games V3");  // Create a window and append into it.
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-        ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-
-        Shader* gShader = shaders[0];
-
-        if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
-        {
-
-            for (Shader* s : shaders) {
-                if (ImGui::BeginTabItem(s->name))
-                {
-                    gShader = s;
-                    ImGui::EndTabItem();
-                }
-            }
-
-            ImGui::EndTabBar();
-
-            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-            ImGui::Text("Vertex Shader");
-            ImGui::SameLine();
-            ImGui::Text(std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
-            ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-
-            ImGui::Text("Fragment Shader");
-            ImGui::SameLine();
-            ImGui::Text(std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
-            ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-
-            if (ImGui::Button("reCompile Shaders"))
-                gShader->reload();
-
-            ImGui::SameLine();
-
-            if (ImGui::Button("Save Shaders"))
-               gShader->saveShaders();
-        }
-
-        ImGui::Text("Model Matrix");
-        // values we'll use to derive a model matrix
-        ImGui::DragFloat3("Translate", transVec,.01f, -3.0f, 3.0f);
-        ImGui::InputFloat3("Axis", axis,"%.2f");
-        ImGui::SliderAngle("Angle", &angle,-90.0f,90.0f);
-        ImGui::DragFloat3("Scale", scaleVec,.01f,-3.0f,3.0f);
-        
-        // factor in the results of imgui tweaks for the next round...
-        myRenderer->setXForm(glm::mat4(1.0f));
-        myRenderer->translate(transVec);
-        myRenderer->rotate(axis, angle);
-        myRenderer->scale(scaleVec);
-        
-        ImGui::Text("Camera Matrix");
-        ImGui::SameLine(); ImGui::Checkbox("AutoPan", &autoPan);
-        // values we'll use to derive a model matrix
-        ImGui::DragFloat3("vTranslate", v_transVec,.1f, -100.0f, 100.0f);
-        ImGui::InputFloat3("vAxis", v_axis,"%.2f");
-        
-        if (!autoPan)
-            ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
-        else
-            v_angle = fmod(glfwGetTime(), glm::pi<float>() *2.0) - glm::pi<float>();
-
-        ImGui::DragFloat("Zoom", &(camera.Zoom), .5f,12.0f, 120.0f);
-        pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
-        
-        vMat = glm::mat4(1.0f);
-        vMat = glm::translate(glm::mat4(1.0f), -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
-        vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
-
-        for (int i = 0; i < 3; i++)
-        {
-            ImGui::PushID(i);
-
-            if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
-                material->texture = texture[i];
-            ImGui::PopID();
-            ImGui::SameLine();
-        }
-
-        ImGui::NewLine();
-        //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
-
-        ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(256, 256));
-
-        ImGui::End();
-
-        // IMGUI Rendering
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    }
-}
 
 
 void setupFrameBuffer() {
@@ -325,6 +210,7 @@ int main()
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR,GL_FALSE);
 #endif
     // glfw window creation
     // --------------------
@@ -357,39 +243,39 @@ int main()
     setupTextures();
     setupFrameBuffer();
 
-    std::vector<Shader*> shaders;
-
-    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl","base"); // declare and intialize our base shader
+    std::vector<Shader*> shaders;   // pave the way for "scene" rendering
+    std::vector<Renderer*> renderers;
+    
+    // declare and intialize our base shader
+    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl","base");
     shaders.push_back(&ourShader);
     
-    Shader tShader("data/vertColors.lgsl", "data/fragColors.lgsl","colored"); // declare and intialize shader with colored vertices
+    // declare and intialize shader with colored vertices
+    Shader tShader("data/vertColors.lgsl", "data/fragColors.lgsl","colored");
     shaders.push_back(&tShader);
     
-    Shader txShader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured"); // declare and intialize shader with texture(s)
+    // declare and intialize shader with texture(s)
+    Shader txShader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
     shaders.push_back(&txShader);
     
-    Shader flShader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit"); // declare and intialize shader with ADS lighting
+    // declare and intialize shader with ADS lighting
+    Shader flShader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit");
     shaders.push_back(&flShader);
 
-    Shader skyShader("data/vSky.lgsl", "data/fSky.lgsl", "Skybox"); // declare and intialize skybox shader
+    // declare and intialize skybox shader
+    Shader skyShader("data/vSky.lgsl", "data/fSky.lgsl", "Skybox");
     shaders.push_back(&skyShader);
 
     Shader particleShader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
     shaders.push_back(&particleShader);
-
-    // set up the perspective and the camera
-    pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
-
-    // pave the way for "scene" rendering
-    std::vector<renderer*> renderers;
-
-    Material shuttleMaterial(&txShader,texture[2],glm::vec4(-1.0));
+    
     Material yellow(&ourShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    Material checkers(&txShader,texture[0], glm::vec4(-1.0));
-    Material background(&skyShader,texture[3], glm::vec4(-1.0));
-    Material pMaterial(&particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
     Material coloredVerts(&tShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material pMaterial(&particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
     Material litMaterial(&flShader, -1, glm::vec4(1.0, 0.0, 1.0, 1.0));
+    Material background(&skyShader,texture[3], glm::vec4(-1.0));
+    Material shuttleMaterial(&txShader,texture[2],glm::vec4(-1.0));
+    Material checkers(&txShader,texture[0], glm::vec4(-1.0));
     Material offScreenMaterial(&txShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
     skybox mySky(&background, glm::mat4(1.0f)); // our "first quad"
@@ -415,15 +301,18 @@ int main()
     
     particleCube myParticle(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
     renderers.push_back(&myParticle);
-
+   
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
+    
     // render loop
     // -----------
+
+    // set up the perspective and the camera
+    pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)SCR_WIDTH / (float)SCR_HEIGHT), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
 
     double lastTime = glfwGetTime();
 
     glEnable(GL_DEPTH_TEST);
-    //glDepthFunc(GL_ALWAYS);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -440,7 +329,7 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
         // render background
         // ------
@@ -453,11 +342,11 @@ int main()
         glm::vec4 lightPos = rotate * glm::vec4(-2, 0, 5.0, 1.0);
 
         // call each of the queued renderers
-        for(renderer *r : renderers)
+        for(Renderer *r : renderers)
         {
             r->render(vMat, pMat, deltaTime, lightPos);
         }
-
+        /*
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -465,7 +354,7 @@ int main()
         glEnable(GL_DEPTH_TEST);
 
         fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
-
+        */
         // draw imGui over the top
         drawIMGUI(shaders, &myQuad,&checkers);
 
