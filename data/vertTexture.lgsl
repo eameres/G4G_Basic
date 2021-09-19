@@ -8,6 +8,7 @@ layout (location = 3) in vec2 uv;
 uniform mat4 m; // model
 uniform mat4 v; // view
 uniform mat4 p; // perspective
+uniform float myTime;
 
 out vec2 TexCoord;
 out vec4 varyingColor;
@@ -17,4 +18,6 @@ void main()
 	TexCoord = uv.xy;
 	varyingColor = vec4(aCol,1.0);
 	gl_Position = p*v*m*vec4(aPos, 1.0);
+    //gl_Position = p*v*m*vec4(aPos + (aNorm*sin(myTime)/5.0), 1.0);
+    
 }

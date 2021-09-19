@@ -88,6 +88,10 @@ void setupTexture(unsigned int tNum, const void* buff, int x, int y, unsigned in
     glGenerateMipmap(GL_TEXTURE_2D);
 
 }
+void deleteTextures(unsigned int texture[])
+{
+    glDeleteTextures(4, texture);
+}
 void setupTextures(unsigned int texture[])
 {
     // create textures 

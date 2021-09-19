@@ -39,7 +39,7 @@ extern Camera camera;
 extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 
-void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *material) {
+void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *material,particleCube *particleSystem) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -145,6 +145,9 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
         }
 
         ImGui::NewLine();
+
+        ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
+
         //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
 
         ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(256, 256));

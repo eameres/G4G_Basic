@@ -32,13 +32,23 @@ class Renderer {
 
 protected:
     unsigned int VBO[8], VAO = 0, EBO = 0;
+    int numVBOs = 1;
+
     int indexCount;
+    float elapsedTime = 0.0f;
 
     glm::mat4 modelMatrix;
 
     Material* myMaterial;
 
     void setupColorAttrib();
+
+public:
+    ~Renderer() {
+        glDeleteBuffers(numVBOs, VBO);
+        glDeleteBuffers(1, &EBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
 
 public: void setXForm(glm::mat4 mat)
 {
@@ -112,6 +122,8 @@ public :
 
 class particleCube : public Renderer {
 public:
+    int maxParticles = 25000;
+    int instances = 250;
     glm::mat4* iModelMatrices;
     glm::vec3* iModelColors;
 public:

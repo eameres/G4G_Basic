@@ -254,7 +254,7 @@ int main()
         fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
         */
         // draw imGui over the top
-        drawIMGUI(shaders, &myQuad,&checkers);
+        drawIMGUI(shaders, &myQuad,&checkers,(particleCube *) pCube);
 
         glfwSwapBuffers(window);
     }
@@ -264,6 +264,7 @@ int main()
     glfwTerminate();
     
     delete pCube;
+    deleteTextures(texture);
     
     return 0;
 }
