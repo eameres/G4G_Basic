@@ -27,7 +27,5 @@ g4gBuild
 # Executables
 *.out
 *.app
-build/imgui.ini
+
 imgui.ini
-imgui.ini
-*.ini
