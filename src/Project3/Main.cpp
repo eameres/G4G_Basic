@@ -299,8 +299,9 @@ int main()
     torus myTorus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     renderers.push_back(&myTorus);
     
-    particleCube myParticle(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    renderers.push_back(&myParticle);
+    Renderer *pCube = new particleCube(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+
+    renderers.push_back(pCube);
    
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     
@@ -364,6 +365,9 @@ int main()
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
+    
+    delete pCube;
+    
     return 0;
 }
 
