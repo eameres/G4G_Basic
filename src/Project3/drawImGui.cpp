@@ -86,12 +86,12 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
             static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
             ImGui::Text("Vertex Shader");
             ImGui::SameLine();
-            ImGui::Text(std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
+            ImGui::Text("%s", std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
             ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
             ImGui::Text("Fragment Shader");
             ImGui::SameLine();
-            ImGui::Text(std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
+            ImGui::Text("%s", std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
             ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
             if (ImGui::Button("reCompile Shaders"))
