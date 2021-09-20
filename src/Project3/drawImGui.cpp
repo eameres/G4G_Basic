@@ -39,7 +39,7 @@ extern Camera camera;
 extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 
-void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *material,particleCube *particleSystem) {
+void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *material,ParticleRenderer *particleSystem) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix

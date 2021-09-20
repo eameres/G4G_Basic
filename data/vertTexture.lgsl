@@ -9,13 +9,26 @@ uniform mat4 m; // model
 uniform mat4 v; // view
 uniform mat4 p; // perspective
 uniform float myTime;
+uniform vec3 cPos;
 
 out vec2 TexCoord;
 out vec4 varyingColor;
+out vec3 FragPos;
+out vec3 Normal;
+flat out vec3 viewPos;
+out vec3 r;
 
 void main()
 {
+
+    //viewPos =-vec3(v[3][0],v[3][1],v[3][2]);
+	viewPos =cPos;
+
 	TexCoord = uv.xy;
+
+    FragPos = vec3(m*vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(m))) * normalize(aNorm); 
+
 	varyingColor = vec4(aCol,1.0);
 	gl_Position = p*v*m*vec4(aPos, 1.0);
     //gl_Position = p*v*m*vec4(aPos + (aNorm*sin(myTime)/5.0), 1.0);

@@ -167,11 +167,11 @@ int main()
     Material pMaterial(&particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
     Material litMaterial(&flShader, -1, glm::vec4(0.0, 1.0, 1.0, 1.0));
     Material background(&skyShader,texture[3], glm::vec4(-1.0));
-    Material shuttleMaterial(&txShader,texture[2], glm::vec4(0.0,0.5, 1.0, 1.0));
-    Material checkers(&txShader,texture[0], glm::vec4(-1.0));
+    Material shuttleMaterial(&txShader,texture[2], texture[3]);
+    Material checkers(&txShader,texture[0], texture[3]);
     Material offScreenMaterial(&txShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
-    skybox mySky(&background, glm::mat4(1.0f)); // our "first quad"
+    SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "first quad"
     renderers.push_back(&mySky); // add it to the render list
 
     QuadRenderer myQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
@@ -183,16 +183,16 @@ int main()
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
 
-    objMesh shuttle(&shuttleMaterial, tf2);
+    ObjRenderer shuttle(&shuttleMaterial, tf2);
     renderers.push_back(&shuttle);
 
     nCubeRenderer myCube2(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
     renderers.push_back(&myCube2);
 
-    torus myTorus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    TorusRenderer myTorus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     renderers.push_back(&myTorus);
     
-    Renderer *pCube = new particleCube(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    Renderer *pCube = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
     renderers.push_back(pCube);
    
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
@@ -254,7 +254,7 @@ int main()
         fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
         */
         // draw imGui over the top
-        drawIMGUI(shaders, &myQuad,&checkers,(particleCube *) pCube);
+        drawIMGUI(shaders, &myQuad,&checkers,(ParticleRenderer *) pCube);
 
         glfwSwapBuffers(window);
     }

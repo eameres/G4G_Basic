@@ -7,6 +7,7 @@ class Material {
 public:
     Shader* myShader;
     GLint texture;
+    GLint envTexture = 0;
 
     glm::vec4 color;
 
@@ -16,6 +17,12 @@ public:
         texture = _texture;
         color = _color;
     }
+    Material(Shader* _shader, GLint _texture, GLint _envTexture) {
+        myShader = _shader;
+        texture = _texture;
+        envTexture = _envTexture;
+        color = glm::vec4(1.0,1.0,1.0,1.0);
+    }
 
     void use() {
 
@@ -23,6 +30,11 @@ public:
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+        myShader->setInt("OurTexture", 0);
+        
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, envTexture);
+        myShader->setInt("EnvTexture", 1);
 
         glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));
     }
@@ -93,14 +105,14 @@ public:
     nCubeRenderer(Material*, glm::mat4 m);
 };
 
-class objMesh : public Renderer {
+class ObjRenderer : public Renderer {
 public:
-    objMesh(Material*, glm::mat4 m);
+    ObjRenderer(Material*, glm::mat4 m);
 };
 
-class torus : public Renderer {
+class TorusRenderer : public Renderer {
 public:
-    torus(Material*, glm::mat4 m);
+    TorusRenderer(Material*, glm::mat4 m);
 };
 
 class CubeRenderer : public Renderer {
@@ -113,21 +125,21 @@ public:
     QuadRenderer(Material*, glm::mat4 m);
 };
 
-class skybox : public Renderer {
+class SkyboxRenderer : public Renderer {
 public:
-    skybox(Material*, glm::mat4 m);
+    SkyboxRenderer(Material*, glm::mat4 m);
 public :
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };
 
-class particleCube : public Renderer {
+class ParticleRenderer : public Renderer {
 public:
     int maxParticles = 25000;
     int instances = 250;
     glm::mat4* iModelMatrices;
     glm::vec3* iModelColors;
 public:
-    particleCube(Material*, glm::mat4 m);
+    ParticleRenderer(Material*, glm::mat4 m);
 public:
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 private:

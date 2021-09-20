@@ -25,6 +25,7 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
+    
     mvp = pMat * vMat * modelMatrix;
 
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
@@ -34,7 +35,10 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
-    glUniform3f(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+    glm::vec3 cPos = vMat * glm::vec4(0,0,0,1);
+    cPos = -vMat * glm::vec4(cPos,0);
+    //glUniform3f(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), //-glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cPos));
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
     glBindVertexArray(VAO);
@@ -150,7 +154,7 @@ nCubeRenderer :: nCubeRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-objMesh:: objMesh(Material* material, glm::mat4 m)
+ObjRenderer:: ObjRenderer(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -225,9 +229,9 @@ QuadRenderer:: QuadRenderer(Material* material, glm::mat4 m)
     };
     float vertices[44] = {
         // positions           // normal           // color             // texture
-         0.5f,  0.5f, 0.0f,    1.0f, 0.0f, 0.0f,   0.0f, 1.0f, 0.0f,    1.0f, 1.0f,     // top right
-         0.5f, -0.5f, 0.0f,    0.0f, 1.0f, 0.0f,   0.0f, 0.0f, 1.0f,    1.0f, 0.0f,     // bottom right
-        -0.5f,  0.5f, 0.0f,    0.0f, 1.0f, 0.0f,   1.0f, 0.0f, 1.0f,    0.0f, 1.0f,     // top left 
+         0.5f,  0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,    1.0f, 1.0f,     // top right
+         0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 0.0f, 1.0f,    1.0f, 0.0f,     // bottom right
+        -0.5f,  0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f,    0.0f, 1.0f,     // top left
         -0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 1.0f, 1.0f,    0.0f, 0.0f      // bottom left
     };
 
@@ -349,7 +353,7 @@ CubeRenderer:: CubeRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 };
 
-torus:: torus(Material* material, glm::mat4 m)
+TorusRenderer:: TorusRenderer(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -447,7 +451,7 @@ torus:: torus(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 };
 
-skybox::skybox(Material* material, glm::mat4 m)
+SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -464,7 +468,7 @@ skybox::skybox(Material* material, glm::mat4 m)
     glEnableVertexAttribArray(0);
 }
 
-void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -492,7 +496,7 @@ void skybox::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 
     glEnable(GL_DEPTH_TEST);
 }
 
-void particleCube::setupIMatrices() {
+void ParticleRenderer::setupIMatrices() {
     unsigned int amount = maxParticles;
     iModelMatrices = new glm::mat4[amount];
     iModelColors = new glm::vec3[amount];
@@ -544,7 +548,7 @@ void particleCube::setupIMatrices() {
     }
 }
 
-particleCube::particleCube(Material* material, glm::mat4 m)
+ParticleRenderer::ParticleRenderer(Material* material, glm::mat4 m)
 {
 
     modelMatrix = m;
@@ -581,7 +585,7 @@ particleCube::particleCube(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-void particleCube::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+void ParticleRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
