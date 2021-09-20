@@ -20,17 +20,16 @@ out vec3 r;
 
 void main()
 {
-
-    //viewPos =-vec3(v[3][0],v[3][1],v[3][2]);
 	viewPos =cPos;
+	vec3 aPos1 = aPos;// + (aNorm*sin(myTime)/5.0);
 
 	TexCoord = uv.xy;
 
-    FragPos = vec3(m*vec4(aPos, 1.0));
-    Normal = mat3(transpose(inverse(m))) * normalize(aNorm); 
+    FragPos = vec3(m*vec4(aPos1, 1.0));
+    Normal = normalize(mat3(transpose(inverse(m))) * normalize(aNorm)); 
 
 	varyingColor = vec4(aCol,1.0);
-	gl_Position = p*v*m*vec4(aPos, 1.0);
-    //gl_Position = p*v*m*vec4(aPos + (aNorm*sin(myTime)/5.0), 1.0);
+	//gl_Position = p*v*m*vec4(aPos1, 1.0);
+    gl_Position = p*v*m*vec4(aPos1, 1.0);
     
 }

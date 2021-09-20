@@ -8,6 +8,7 @@ public:
     Shader* myShader;
     GLint texture;
     GLint envTexture = 0;
+    float shine = 0.1f;
 
     glm::vec4 color;
 

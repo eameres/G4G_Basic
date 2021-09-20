@@ -131,7 +131,7 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
         pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
         
         vMat = glm::mat4(1.0f);
-        vMat = glm::translate(glm::mat4(1.0f), -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
+        vMat = glm::translate(vMat, -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
         vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
 
         for (int i = 0; i < 3; i++)
@@ -145,6 +145,8 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
         }
 
         ImGui::NewLine();
+        
+        ImGui::DragFloat("shine", &material->shine, .05, 0.0, 1.0);
 
         ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
 
