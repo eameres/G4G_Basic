@@ -5,7 +5,7 @@
 class renderer {
 
 protected:
-    unsigned int VBO = 0, VAO = 0, EBO = 0;
+    unsigned int VBO[2], VAO = 0, EBO = 0;
     unsigned int indexCount;
 
     glm::mat4 modelMatrix;

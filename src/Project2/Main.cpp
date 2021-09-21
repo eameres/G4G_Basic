@@ -44,11 +44,11 @@ int myTexture();
 
 class QuadRenderer : public renderer {
     // ------------------------------------------------------------------
-    float vertices[12] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+    float vertices[20] = {
+         0.5f,  0.5f, 0.0f, 0.0,0.0, // top right
+         0.5f, -0.5f, 0.0f, 0.0,0.0,   // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0,0.0,   // bottom left
+        -0.5f,  0.5f, 0.0f, 0.0,0.0,    // top left 
     };
 
 protected: 
@@ -65,7 +65,7 @@ protected:
         myShader = shader;
 
         glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
+        glGenBuffers(1, VBO);
         glGenBuffers(1, &EBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
         glBindVertexArray(VAO);
@@ -73,11 +73,14 @@ protected:
 
         // vertex buffer object, simple version, just coordinates
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0); 
+        
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
 
         // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);

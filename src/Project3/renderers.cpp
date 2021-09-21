@@ -16,6 +16,8 @@
 #include "renderer.h"
 #include "ImportedModel.h"
 
+std::vector<Material*> Material::materialList;
+
 void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
 { // here's where the "actual drawing" gets done
 

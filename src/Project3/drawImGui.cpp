@@ -39,7 +39,7 @@ extern Camera camera;
 extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 
-void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *material,ParticleRenderer *particleSystem) {
+void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<Material*>materials,ParticleRenderer *particleSystem) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -80,27 +80,35 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
                     ImGui::EndTabItem();
                 }
             }
+            bool showShaders = true;
+
+            if (ImGui::BeginTabItem("close")) {
+                showShaders = false;
+                ImGui::EndTabItem();
+            }
 
             ImGui::EndTabBar();
 
-            static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-            ImGui::Text("Vertex Shader");
-            ImGui::SameLine();
-            ImGui::Text("%s", std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
-            ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+            if (showShaders) {
+                static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+                ImGui::Text("Vertex Shader");
+                ImGui::SameLine();
+                ImGui::Text("%s", std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
+                ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
-            ImGui::Text("Fragment Shader");
-            ImGui::SameLine();
-            ImGui::Text("%s", std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
-            ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+                ImGui::Text("Fragment Shader");
+                ImGui::SameLine();
+                ImGui::Text("%s", std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
+                ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
-            if (ImGui::Button("reCompile Shaders"))
-                gShader->reload();
+                if (ImGui::Button("reCompile Shaders"))
+                    gShader->reload();
 
-            ImGui::SameLine();
+                ImGui::SameLine();
 
-            if (ImGui::Button("Save Shaders"))
-               gShader->saveShaders();
+                if (ImGui::Button("Save Shaders"))
+                    gShader->saveShaders();
+            }
         }
 
         ImGui::Text("Model Matrix");
@@ -139,14 +147,15 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *mate
             ImGui::PushID(i);
 
             if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
-                material->texture = texture[i];
+                materials[6]->texture = texture[i];
             ImGui::PopID();
             ImGui::SameLine();
         }
 
         ImGui::NewLine();
-        
-        ImGui::DragFloat("shine", &material->shine, .05, 0.0, 1.0);
+
+        ImGui::SliderFloat("shine5", &materials[5]->shine, 0.0, 1.0);
+        ImGui::SliderFloat("shine6", &materials[6]->shine, 0.0, 1.0);
 
         ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
 

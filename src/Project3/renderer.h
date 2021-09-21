@@ -5,6 +5,8 @@
 
 class Material {
 public:
+    static std::vector<Material*> Material::materialList;
+public:
     Shader* myShader;
     GLint texture;
     GLint envTexture = 0;
@@ -17,12 +19,16 @@ public:
         myShader = _shader;
         texture = _texture;
         color = _color;
+
+        materialList.push_back(this);
     }
     Material(Shader* _shader, GLint _texture, GLint _envTexture) {
         myShader = _shader;
         texture = _texture;
         envTexture = _envTexture;
         color = glm::vec4(1.0,1.0,1.0,1.0);
+
+        materialList.push_back(this);
     }
 
     void use() {
@@ -87,15 +93,6 @@ public: void scale(const float scale[])
 {
     modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
 }
-/*
-public: void setScale(const float scale[])
-{
-    glm::mat4 tempModel = modelMatrix;
-
-    modelMatrix = glm::scale(glm::inverse(modelMatrix), glm::vec3(scale[0], scale[1], scale[2]));
-    modelMatrix = tempModel * modelMatrix;
-}
-*/
 public: 
     virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };

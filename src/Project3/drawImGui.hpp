@@ -8,6 +8,6 @@
 #ifndef drawImGui_hpp
 #define drawImGui_hpp
 
-void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,Material *material,ParticleRenderer *particleSystem);
+void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,std::vector<Material *>materials,ParticleRenderer *particleSystem);
 
 #endif /* drawImGui_hpp */

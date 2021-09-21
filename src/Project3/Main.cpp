@@ -254,7 +254,7 @@ int main()
         fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
         */
         // draw imGui over the top
-        drawIMGUI(shaders, &myQuad,&checkers,(ParticleRenderer *) pCube);
+        drawIMGUI(shaders, &myQuad,Material::materialList,(ParticleRenderer *) pCube);
 
         glfwSwapBuffers(window);
     }
