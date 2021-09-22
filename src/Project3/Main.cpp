@@ -218,6 +218,9 @@ int main()
 
     TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
     renderers.push_back(&torus);
+
+    SphereRenderer sphere(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
+    renderers.push_back(&sphere);
     
     Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
     renderers.push_back(cubeParticles);

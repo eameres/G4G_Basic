@@ -60,6 +60,8 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     if (indexCount < 0) {
         glDrawArrays(GL_TRIANGLES, 0, -indexCount);
     }
@@ -463,6 +465,70 @@ TorusRenderer:: TorusRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 };
 
+SphereRenderer::SphereRenderer(Material* material, glm::mat4 m)
+{
+    Sphere mySphere;
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    modelMatrix = m;
+
+    myMaterial = material;
+
+    glGenVertexArrays(1, &VAO);
+    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
+    glBindVertexArray(VAO);
+
+    glGenBuffers(numVBOs = 2, VBO);
+    glGenBuffers(1, &EBO);
+
+    std::vector<float> attribValues;
+    std::vector<int> indices;
+
+    std::vector<int> ind = mySphere.getIndices();
+    std::vector<glm::vec3> vert = mySphere.getVertices();
+    std::vector<glm::vec2> tex = mySphere.getTexCoords();
+
+    int numIndices = mySphere.getNumIndices();
+    //
+    //
+    // Notice!!!  Since this is a unit sphere, 
+    // we can use the vertex coordinates as the vertex normals !!!
+    //
+    //
+    for (int i = 0; i < vert.size(); i++) {
+        attribValues.push_back((vert[i]).x);
+        attribValues.push_back((vert[i]).y);
+        attribValues.push_back((vert[i]).z);
+
+        attribValues.push_back((tex[i]).s);
+        attribValues.push_back((tex[i]).t);
+    }
+
+    indexCount = numIndices;
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    glBufferData(GL_ARRAY_BUFFER, attribValues.size() * 4, &attribValues[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ind.size() * 4, &ind[0], GL_STATIC_DRAW);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // normal vector attribute  :  REUSE THE VERTEX COORDINATES !!!
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+
+    // texture coord attribute
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(3);
+
+    setupColorAttrib();
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glBindVertexArray(0);
+};
+
 SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -623,3 +689,50 @@ void ParticleRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, 
     glBindVertexArray(VAO);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, instances);
 }
+
+
+Sphere::Sphere() {
+    init(32);
+}
+
+Sphere::Sphere(int prec) {
+    init(prec);
+}
+
+float Sphere::toRadians(float degrees) { return (degrees * 2.0f * 3.14159f) / 360.0f; }
+
+void Sphere::init(int prec) {
+    numVertices = (prec + 1) * (prec + 1);
+    numIndices = prec * prec * 6;
+    for (int i = 0; i < numVertices; i++) { vertices.push_back(glm::vec3()); }
+    for (int i = 0; i < numVertices; i++) { texCoords.push_back(glm::vec2()); }
+    for (int i = 0; i < numIndices; i++) { indices.push_back(0); }
+
+    // calculate triangle vertices
+    for (int i = 0; i <= prec; i++) {
+        for (int j = 0; j <= prec; j++) {
+            float y = (float)cos(toRadians(180.0f - i * 180.0f / prec));
+            float x = -(float)cos(toRadians(j * 360.0f / prec)) * (float)abs(cos(asin(y)));
+            float z = (float)sin(toRadians(j * 360.0f / (float)(prec))) * (float)abs(cos(asin(y)));
+            vertices[i * (prec + 1) + j] = glm::vec3(x, y, z);
+            texCoords[i * (prec + 1) + j] = glm::vec2(((float)j / prec), ((float)i / prec));
+        }
+    }
+    // calculate triangle indices
+    for (int i = 0; i < prec; i++) {
+        for (int j = 0; j < prec; j++) {
+            indices[6 * (i * prec + j) + 0] = i * (prec + 1) + j;
+            indices[6 * (i * prec + j) + 1] = i * (prec + 1) + j + 1;
+            indices[6 * (i * prec + j) + 2] = (i + 1) * (prec + 1) + j;
+            indices[6 * (i * prec + j) + 3] = i * (prec + 1) + j + 1;
+            indices[6 * (i * prec + j) + 4] = (i + 1) * (prec + 1) + j + 1;
+            indices[6 * (i * prec + j) + 5] = (i + 1) * (prec + 1) + j;
+        }
+    }
+}
+
+int Sphere::getNumVertices() { return numVertices; }
+int Sphere::getNumIndices() { return numIndices; }
+std::vector<int> Sphere::getIndices() { return indices; }
+std::vector<glm::vec3> Sphere::getVertices() { return vertices; }
+std::vector<glm::vec2> Sphere::getTexCoords() { return texCoords; }

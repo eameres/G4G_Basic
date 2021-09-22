@@ -151,6 +151,11 @@ public:
     TorusRenderer(Material*, glm::mat4 m);
 };
 
+class SphereRenderer : public Renderer {
+public:
+    SphereRenderer(Material*, glm::mat4 m);
+};
+
 class CubeRenderer : public Renderer {
 public:
     CubeRenderer(Material*, glm::mat4 m);
@@ -184,3 +189,23 @@ private:
     void setupIMatrices(void);
 };
 
+class Sphere
+{
+private:
+    int numVertices;
+    int numIndices;
+    std::vector<int> indices;
+    std::vector<glm::vec3> vertices;
+    std::vector<glm::vec2> texCoords;
+    void init(int);
+    float toRadians(float degrees);
+
+public:
+    Sphere();
+    Sphere(int prec);
+    int getNumVertices();
+    int getNumIndices();
+    std::vector<int> getIndices();
+    std::vector<glm::vec3> getVertices();
+    std::vector<glm::vec2> getTexCoords();
+};
