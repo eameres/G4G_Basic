@@ -17,7 +17,7 @@ public:
     const char* name;
 
 public:
-    char vtext[1024], ftext[1024];
+    char vtext[2048], ftext[4192];
 
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------

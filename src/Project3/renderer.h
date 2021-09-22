@@ -5,14 +5,15 @@
 
 class Material {
 public:
-    static std::vector<Material*> Material::materialList;
-public:
     Shader* myShader;
     GLint texture;
     GLint envTexture = 0;
     float shine = 0.1f;
+    bool shadow = false;
 
     glm::vec4 color;
+    
+    static std::vector<Material*> materialList;
 
 public:
     Material(Shader* _shader, GLint _texture, glm::vec4 _color) {
@@ -27,8 +28,24 @@ public:
         texture = _texture;
         envTexture = _envTexture;
         color = glm::vec4(1.0,1.0,1.0,1.0);
-
+        shadow = false;
         materialList.push_back(this);
+    }
+    Material(Shader* _shader, GLint _texture, GLint _envTexture, bool _shadow) {
+        myShader = _shader;
+        texture = _texture;
+        envTexture = _envTexture;
+        color = glm::vec4(1.0,1.0,1.0,1.0);
+        shadow = _shadow;
+        materialList.push_back(this);
+    }
+    ~Material(){
+        std::vector<Material*>::const_iterator id;
+            
+        id = find(materialList.begin(), materialList.end(), this);
+
+        if (id != materialList.end())
+            materialList.erase(id);
     }
 
     void use() {
@@ -40,19 +57,29 @@ public:
         myShader->setInt("OurTexture", 0);
         
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, envTexture);
+        
+        if (shadow)
+            glBindTexture(GL_TEXTURE_2D, envTexture);
+        else
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envTexture);
+            
         myShader->setInt("EnvTexture", 1);
+        
+        myShader->setInt("shadowMap", 1);
 
         glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));
     }
 };
 
 class Renderer {
+public:
+    static std::vector<Renderer*> renderList;
 
 protected:
     unsigned int VBO[8], VAO = 0, EBO = 0;
     int numVBOs = 1;
-
+public :
+    bool enabled = true;
     int indexCount;
     float elapsedTime = 0.0f;
 
@@ -60,13 +87,24 @@ protected:
 
     Material* myMaterial;
 
+protected:
     void setupColorAttrib();
 
 public:
+    Renderer(){
+        renderList.push_back(this);
+    }
     ~Renderer() {
         glDeleteBuffers(numVBOs, VBO);
         glDeleteBuffers(1, &EBO);
         glDeleteVertexArrays(1, &VAO);
+        
+        std::vector<Renderer*>::const_iterator id;
+            
+        id = find(renderList.begin(), renderList.end(), this);
+
+        if (id != renderList.end())
+            renderList.erase(id);
     }
 
 public: void setXForm(glm::mat4 mat)
@@ -124,22 +162,24 @@ public:
 };
 
 class SkyboxRenderer : public Renderer {
+    
 public:
     SkyboxRenderer(Material*, glm::mat4 m);
-public :
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
 };
 
 class ParticleRenderer : public Renderer {
+    
 public:
     int maxParticles = 25000;
     int instances = 250;
     glm::mat4* iModelMatrices;
     glm::vec3* iModelColors;
+    
 public:
     ParticleRenderer(Material*, glm::mat4 m);
-public:
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+    
 private:
     void setupIMatrices(void);
 };

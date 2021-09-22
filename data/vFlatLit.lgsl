@@ -10,12 +10,26 @@ uniform mat4 p; // perspective
 uniform vec4 ourColor;
 uniform float myTime;
 
+uniform mat4 lightSpaceMatrix;
+
 out vec3 FragPos;
 out vec3 Normal;
 out vec4 varyingColor;
 
+out VS_OUT{
+	vec3 FragPos;
+	vec3 Normal;
+	vec2 TexCoords;
+	vec4 FragPosLightSpace;
+} vs_out;
+
 void main()
 {
+	vs_out.FragPos = vec3(m * vec4(aPos, 1.0));
+    vs_out.Normal = transpose(inverse(mat3(m))) * aNormal;
+    //vs_out.TexCoords = aTexCoords;
+    vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    
 	varyingColor = vec4(aCol,1.0);
     FragPos = vec3(m * vec4( aPos, 1.0)  );
     //FragPos = vec3(m * (vec4( aPos + (aNormal*sin(myTime)/5.0), 1.0) ) );
@@ -23,3 +37,4 @@ void main()
     
     gl_Position = p * v * vec4(FragPos, 1.0);
 }
+

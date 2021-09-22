@@ -38,6 +38,7 @@ extern Camera camera;
 
 extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
+extern unsigned int depthMap;
 
 void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<Material*>materials,ParticleRenderer *particleSystem) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -160,8 +161,8 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<M
         ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
 
         //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
-
-        ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(256, 256));
+        
+        ImGui::Image((void*)(intptr_t)depthMap, ImVec2(128, 128));
 
         ImGui::End();
 

@@ -17,6 +17,7 @@
 #include "ImportedModel.h"
 
 std::vector<Material*> Material::materialList;
+std::vector<Renderer*> Renderer::renderList;
 
 void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
 { // here's where the "actual drawing" gets done
@@ -40,10 +41,18 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     glm::vec3 cPos = vMat * glm::vec4(0,0,0,1);
     cPos = -vMat * glm::vec4(cPos,0);
-    //glUniform3f(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), //-glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cPos));
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
+    float near_plane =0.5f, far_plane = 7.50f;
+    glm::mat4 lightProjection = glm::ortho(-2.0f,2.0f, -2.0f, 2.0f, near_plane, far_plane);
+    
+    glm::mat4 lightView = glm::lookAt(lightLoc,
+                                      glm::vec3( 0.0f, 0.0f,  0.0f),
+                                      glm::vec3( 0.0f, 1.0f,  0.0f));
+    
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightProjection * lightView));
+    
     glBindVertexArray(VAO);
 
     glEnable(GL_DEPTH_TEST);
