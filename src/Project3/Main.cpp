@@ -33,6 +33,7 @@
 
 glm::mat4 pMat; // perspective matrix
 glm::mat4 vMat; // view matrix
+glm::vec3 cPos;
 
 Camera camera;
 
@@ -103,6 +104,8 @@ void setupDepthMap() {
 }
 int main()
 {
+    RenderContext RC;
+
     namespace fs = std::filesystem;
     std::cout << "Current path is " << fs::current_path() << '\n';
 
@@ -160,7 +163,7 @@ int main()
     setupDepthMap();
 
     std::vector<Shader*> shaders;   // pave the way for "scene" rendering
-    std::vector<Renderer*> renderers;
+    //std::vector<Renderer*> renderers;
     
     // declare and intialize our base shader
     Shader *ourShader = new Shader("data/vertex.lgsl", "data/fragment.lgsl","base");
@@ -187,6 +190,9 @@ int main()
     
     Shader *depthShader = new Shader("data/vDepth.lgsl", "data/fDepth.lgsl", "Depth");
     shaders.push_back(depthShader);
+
+    Shader* postShader = new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
+    shaders.push_back(postShader);
     
     Material white(ourShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
     Material coloredVerts(tShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
@@ -195,41 +201,44 @@ int main()
     Material background(skyShader,texture[3], glm::vec4(-1.0));
     Material shuttleMaterial(txShader,texture[2], texture[3]);
     Material checkers(txShader,texture[0], texture[3]);
-    Material offScreenMaterial(txShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material offScreenMaterial(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     Material depthMaterial(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
     SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "first quad"
-    renderers.push_back(&mySky); // add it to the render list
+    RC.renderers.push_back(&mySky); // add it to the render list
 
-    QuadRenderer frontQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
-    renderers.push_back(&frontQuad); // add it to the render list
-
-    QuadRenderer backQuad(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(),glm::vec3(1.0,0.0,0.0))); // our "second quad"
-    renderers.push_back(&backQuad); // add it to the render list
     
-    glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
-    tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
+    glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    tf2 = glm::scale(tf2, glm::vec3(.10f, .10f, .10f));
 
-    ObjRenderer shuttle(&shuttleMaterial, tf2);
-    renderers.push_back(&shuttle);
+    ObjRenderer shuttle("data/sponza.obj_",&shuttleMaterial, tf2);
+    RC.renderers.push_back(&shuttle);
 
     nCubeRenderer cube(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
-    renderers.push_back(&cube);
+    RC.renderers.push_back(&cube);
 
     TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-    renderers.push_back(&torus);
+    RC.renderers.push_back(&torus);
 
     SphereRenderer sphere(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
-    renderers.push_back(&sphere);
+    RC.renderers.push_back(&sphere);
     
     Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    renderers.push_back(cubeParticles);
+    RC.renderers.push_back(cubeParticles);
+
+    nCubeRenderer lightCube(&white, glm::mat4(1.0f));
+    RC.renderers.push_back(&lightCube);
+
+    QuadRenderer frontQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
+    RC.renderers.push_back(&frontQuad); // add it to the render list
+
+    QuadRenderer backQuad(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
+    RC.renderers.push_back(&backQuad); // add it to the render list
+
    
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     fQuad.enabled = false;
     
-    nCubeRenderer lightCube(&white, glm::mat4(1.0f));
-    renderers.push_back(&lightCube);
 
     // render loop
     // -----------
@@ -246,6 +255,9 @@ int main()
     double lastTime = glfwGetTime();
 
     glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     while (!glfwWindowShouldClose(window))
     {
@@ -261,8 +273,6 @@ int main()
         // input
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
-
-        //glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
 
         // render background
         // ------
@@ -295,7 +305,7 @@ int main()
                                           glm::vec3( 0.0f, 1.0f,  0.0f));
         
         // call each of the queued renderers
-        for(Renderer *r : renderers)
+        for(Renderer *r : RC.renderers)
         {
             Material *temp = r->myMaterial;
             //r->myMaterial = &depthMaterial;
@@ -303,26 +313,29 @@ int main()
             r->myMaterial = temp;
         }
         glViewport(0, 0, scrn_width, scrn_height);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
         
         // call each of the queued renderers
-        for(Renderer *r : renderers)
+        for(Renderer *r : RC.renderers)
         {
             r->render(vMat, pMat, deltaTime, lightPos);
         }
-        /*
+        
+        
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.2f, 0.3f, 0.3f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
         fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
-        */
+        
         // draw imGui over the top
         drawIMGUI(shaders, &frontQuad,Material::materialList,(ParticleRenderer *) cubeParticles);
 

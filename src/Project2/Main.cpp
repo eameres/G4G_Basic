@@ -22,6 +22,8 @@
 #include <vector>
 #include <filesystem>
 
+unsigned int texture;
+
 #include "shader_s.h"
 #include "renderer.h"
 
@@ -35,7 +37,6 @@ glm::mat4 vMat; // view matrix
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
-unsigned int texture;
 
 // image buffer used by raster drawing basics.cpp
 extern unsigned char imageBuff[512][512][3];
@@ -45,10 +46,10 @@ int myTexture();
 class QuadRenderer : public renderer {
     // ------------------------------------------------------------------
     float vertices[20] = {
-         0.5f,  0.5f, 0.0f, 0.0,0.0, // top right
-         0.5f, -0.5f, 0.0f, 0.0,0.0,   // bottom right
+         0.5f,  0.5f, 0.0f, 1.0,1.0, // top right
+         0.5f, -0.5f, 0.0f, 1.0,0.0,   // bottom right
         -0.5f, -0.5f, 0.0f, 0.0,0.0,   // bottom left
-        -0.5f,  0.5f, 0.0f, 0.0,0.0,    // top left 
+        -0.5f,  0.5f, 0.0f, 0.0,1.0,    // top left 
     };
 
 protected: 

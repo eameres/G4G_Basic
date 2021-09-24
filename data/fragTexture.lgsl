@@ -15,6 +15,6 @@ void main()
 	vec4 envColor;
 	
 	envColor = texture(EnvTexture,r);
-
+	//FragColor = texture(OurTexture, TexCoord);
     FragColor = mix(texture(OurTexture, TexCoord),envColor,shine);
 }

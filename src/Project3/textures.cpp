@@ -27,7 +27,7 @@
 #include <stb_image.h>
 
 // image buffer used by raster drawing basics.cpp
-extern unsigned char imageBuff[512][512][3];
+extern unsigned char imageBuff[512][512][4];
 
 int myTexture();
 int RayTracer();
@@ -99,11 +99,11 @@ void setupTextures(unsigned int texture[])
     glGenTextures(3, texture);
 
     myTexture();
-    setupTexture(texture[0], (const void*)imageBuff, 512, 512, GL_RGB);
+    setupTexture(texture[0], (const void*)imageBuff, 512, 512, GL_RGBA);
     // texture is a buffer we will be generating for pixel experiments
 
     RayTracer();
-    setupTexture(texture[1], (const void*)imageBuff, 512, 512, GL_RGB);
+    setupTexture(texture[1], (const void*)imageBuff, 512, 512, GL_RGBA);
 
     // load image, create texture and generate mipmaps
     int width = 0, height = 0, nrChannels = 0;

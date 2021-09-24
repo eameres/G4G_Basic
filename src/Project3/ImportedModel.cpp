@@ -88,7 +88,6 @@ void ModelImporter::parseOBJ(const char* filePath) {
                         ni[i] = vi[i];
                 }
 
-                
                 if (i > 2){
                     for (int j = 1; j < 3; j++){
                         

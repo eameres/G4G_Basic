@@ -70,6 +70,7 @@ public:
         glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));
     }
 };
+struct RenderContext;
 
 class Renderer {
 public:
@@ -133,6 +134,9 @@ public: void scale(const float scale[])
 }
 public: 
     virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+
+public:
+    virtual void render(RenderContext*,double deltaTime);
 };
 
 class nCubeRenderer : public Renderer {
@@ -143,7 +147,7 @@ public:
 
 class ObjRenderer : public Renderer {
 public:
-    ObjRenderer(Material*, glm::mat4 m);
+    ObjRenderer(const char* filePath, Material*, glm::mat4 m);
 };
 
 class TorusRenderer : public Renderer {
@@ -206,4 +210,28 @@ public:
     int getNumIndices();
     std::vector<int> getIndices();
     std::vector<float> getVerts();
+};
+
+struct RenderContext {
+    glm::vec3 cameraPosition;
+    glm::vec3 cameraTarget;
+    glm::vec3 cameraUp;
+
+    glm::mat4 cameraProjection;
+
+    glm::vec3 lightPosition;
+    glm::vec3 lightTarget;
+    glm::vec3 lightUp;
+
+    glm::mat4 lightProjection;
+
+    std::vector<Renderer*> renderers;
+
+    void render(double deltaTime) {
+
+        for (Renderer* r : renderers)
+        {
+            r->render(this,deltaTime);
+        }
+    }
 };

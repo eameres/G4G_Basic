@@ -19,6 +19,12 @@
 std::vector<Material*> Material::materialList;
 std::vector<Renderer*> Renderer::renderList;
 
+void Renderer::render(RenderContext *myContext,double deltaTime)
+{
+    glm::mat4 vMat = glm::lookAt(myContext->cameraPosition, myContext->cameraTarget, myContext->cameraUp);
+    
+    render(vMat, myContext->cameraProjection, deltaTime, myContext->lightPosition);
+}
 void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
 { // here's where the "actual drawing" gets done
 
@@ -168,7 +174,7 @@ nCubeRenderer :: nCubeRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-ObjRenderer:: ObjRenderer(Material* material, glm::mat4 m)
+ObjRenderer::ObjRenderer(const char* filePath, Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -182,9 +188,7 @@ ObjRenderer:: ObjRenderer(Material* material, glm::mat4 m)
     glGenBuffers(numVBOs = 2, VBO);
     glGenBuffers(1, &EBO);
 
-    ImportedModel myModel("data/shuttle.obj_");
-    //ImportedModel myModel("data/teapot.obj_");
-    //ImportedModel myModel("data/ironman.obj");
+    ImportedModel myModel(filePath);
 
     std::vector<glm::vec3> vert = myModel.getVertices();
     std::vector<glm::vec2> tex = myModel.getTextureCoords();

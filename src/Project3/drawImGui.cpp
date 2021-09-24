@@ -164,6 +164,8 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<M
         
         ImGui::Image((void*)(intptr_t)depthMap, ImVec2(128, 128));
 
+        ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(128, 128));
+
         ImGui::End();
 
         // IMGUI Rendering

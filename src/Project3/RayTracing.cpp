@@ -177,7 +177,7 @@ Vec3f trace(
 
 // image buffer used by raster drawing basics.cpp
 
-extern unsigned char imageBuff[512][512][3];
+extern unsigned char imageBuff[512][512][4];
 
 void render(const std::vector<Sphere>& spheres)
 {
@@ -199,6 +199,7 @@ void render(const std::vector<Sphere>& spheres)
             imageBuff[y][x][0] = pixel->x * 255.0;
             imageBuff[y][x][1] = pixel->y * 255.0;
             imageBuff[y][x][2] = pixel->z * 255.0;
+            imageBuff[y][x][3] = 64.0;
         }
     }
 #ifdef WRITE_TO_PPM

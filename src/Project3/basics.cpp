@@ -12,7 +12,7 @@ using namespace std;
 
 constexpr auto dimx = 512u, dimy = 512u;
 
-unsigned char imageBuff[dimx][dimy][3];
+unsigned char imageBuff[dimx][dimy][4];
 
 int myTexture() 
 {
@@ -24,11 +24,11 @@ int myTexture()
 			if (((i / 16) % 2) == 0)
 			{
 				if (((j / 16) % 2) == 0)
-					imageBuff[i][j][0] = imageBuff[i][j][1] = imageBuff[i][j][2] = 255;
+					imageBuff[i][j][0] = imageBuff[i][j][1] = imageBuff[i][j][2] = imageBuff[i][j][3] = 255;
 			}
 			else {
 				if (((j / 16) % 2) == 1)
-					imageBuff[i][j][0] = imageBuff[i][j][1] = imageBuff[i][j][2] = 255;
+					imageBuff[i][j][0] = imageBuff[i][j][1] = imageBuff[i][j][2] = imageBuff[i][j][3] = 255;
 			}
 		}
 

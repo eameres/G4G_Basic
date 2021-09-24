@@ -49,6 +49,11 @@ public: void scale(const float scale[])
 
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(myShader->ID, "albedo"), 0);
+
+
         glBindVertexArray(VAO);
 
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
