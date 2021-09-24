@@ -19,13 +19,7 @@
 std::vector<Material*> Material::materialList;
 std::vector<Renderer*> Renderer::renderList;
 
-void Renderer::render(RenderContext *myContext,double deltaTime)
-{
-    glm::mat4 vMat = glm::lookAt(myContext->cameraPosition, myContext->cameraTarget, myContext->cameraUp);
-    
-    render(vMat, myContext->cameraProjection, deltaTime, myContext->lightPosition);
-}
-void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -45,9 +39,7 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
-    glm::vec3 cPos = vMat * glm::vec4(0,0,0,1);
-    cPos = -vMat * glm::vec4(cPos,0);
-    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cPos));
+    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cameraLoc));
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
     float near_plane =0.5f, far_plane = 7.50f;
@@ -535,7 +527,7 @@ SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
     glEnableVertexAttribArray(0);
 }
 
-void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -652,7 +644,7 @@ ParticleRenderer::ParticleRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-void ParticleRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc)
+void ParticleRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -734,3 +726,18 @@ int Sphere::getNumVertices() { return numVertices; }
 int Sphere::getNumIndices() { return numIndices; }
 std::vector<int> Sphere::getIndices() { return indices; }
 std::vector<float> Sphere::getVerts() { return verts; }
+
+void treeNode::traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, RenderContext* RC) {
+
+    vMat *= xform;
+
+    for (Renderer* r : group)
+    {
+        r->render(vMat, projection, deltaTime, RC->light.position, RC->camera.position);
+    }
+    if (children.size() > 0) {
+        for (treeNode* n : children) {
+            n->traverse(vMat, projection, deltaTime, RC);
+        }
+    }
+}

@@ -15,7 +15,7 @@ void invert()
 
 const float offset = 1.0 / 500.0;  
 
-void mainPP()
+void mainpp()
 {
     vec2 offsets[9] = vec2[](
         vec2(-offset,  offset), // top-left
@@ -31,7 +31,7 @@ void mainPP()
 
     float kernel[9] = float[](
         1.0/9.0, 1.0/9.0,1.0/9.0,
-        1.0/9.0,1.0/9.0,1.0/9.0,
+        1.0/9.0,3.0/9.0,1.0/9.0,
         1.0/9.0,1.0/9.0,1.0/9.0
     );
     
@@ -44,10 +44,10 @@ void mainPP()
     for(int i = 0; i < 9; i++)
         col += sampleTex[i] * kernel[i];
     
-    col = vec3(1.0 - col);
+    //col = vec3(1.0 - col);
     
     float dist = distance(TexCoord.xy, vec2(0.5, 0.5));
-    col.rgb *= smoothstep(0.8, .1 * 0.799, dist * (0.9));
+    col.rgb *= smoothstep(0.9, .1 * 0.799, dist * (.9));
     
     FragColor = vec4(col,1.0);
 }

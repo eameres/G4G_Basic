@@ -133,10 +133,8 @@ public: void scale(const float scale[])
     modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
 }
 public: 
-    virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+    virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
 
-public:
-    virtual void render(RenderContext*,double deltaTime);
 };
 
 class nCubeRenderer : public Renderer {
@@ -174,7 +172,7 @@ class SkyboxRenderer : public Renderer {
     
 public:
     SkyboxRenderer(Material*, glm::mat4 m);
-    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
 };
 
 class ParticleRenderer : public Renderer {
@@ -187,7 +185,7 @@ public:
     
 public:
     ParticleRenderer(Material*, glm::mat4 m);
-    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc);
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
     
 private:
     void setupIMatrices(void);
@@ -212,26 +210,62 @@ public:
     std::vector<float> getVerts();
 };
 
+struct emitterCollector { // a light or camera common attributes
+    glm::vec3 position;
+    glm::vec3 target;
+    glm::vec3 up;
+
+    glm::mat4 projection;
+};
+
+struct treeNode {
+
+    std::vector<treeNode*> children;
+    std::vector<Renderer*> group;
+    glm::mat4 xform;
+
+    treeNode() {
+        xform = glm::mat4(1.0f);
+    }
+    void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, RenderContext* RC);
+};
+
 struct RenderContext {
-    glm::vec3 cameraPosition;
-    glm::vec3 cameraTarget;
-    glm::vec3 cameraUp;
 
-    glm::mat4 cameraProjection;
+    emitterCollector camera;
+    emitterCollector light;
 
-    glm::vec3 lightPosition;
-    glm::vec3 lightTarget;
-    glm::vec3 lightUp;
+    treeNode *tree;
+    treeNode *currNode;
 
-    glm::mat4 lightProjection;
+public:
+    void addRenderer(Renderer* t) {
+        currNode->group.push_back(t);
+    }    
+    
+    void addChild() {
+        treeNode* child = new treeNode();
 
-    std::vector<Renderer*> renderers;
+        currNode->children.push_back(child);
+        currNode = child;
+    }
 
-    void render(double deltaTime) {
+    void setXform(glm::mat4 _xform) {
+        currNode->xform = _xform;
+    }
 
-        for (Renderer* r : renderers)
-        {
-            r->render(this,deltaTime);
-        }
+    RenderContext() {
+        camera.up = glm::vec3(0.0, 1.0, 0.0);
+        light.up = glm::vec3(0.0, 1.0, 0.0);
+        currNode = tree = new treeNode();
+    };
+
+    void renderFrom(emitterCollector ec, double deltaTime) {
+
+        glm::mat4 vMat = glm::lookAt(ec.position, ec.target, ec.up);
+
+        tree->traverse(vMat, ec.projection, deltaTime, this);
     }
 };
+
+

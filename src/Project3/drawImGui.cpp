@@ -40,7 +40,9 @@ extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 extern unsigned int depthMap;
 
-void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<Material*>materials,ParticleRenderer *particleSystem) {
+void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, 
+    std::vector<Material*>materials,ParticleRenderer *particleSystem,
+    RenderContext *RC) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -55,6 +57,7 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<M
         static float v_angle = 0.0f;
 
         static float v_transVec[] = { 0.0f,0.0f,3.0f };
+        static float camTarget[] = { 0.0f,0.0f,0.0f };
         
         static bool autoPan = false;
         
@@ -129,7 +132,8 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<M
         ImGui::SameLine(); ImGui::Checkbox("AutoPan", &autoPan);
         // values we'll use to derive a model matrix
         ImGui::DragFloat3("vTranslate", v_transVec,.1f, -100.0f, 100.0f);
-        ImGui::InputFloat3("vAxis", v_axis,"%.2f");
+        ImGui::InputFloat3("vAxis", v_axis, "%.2f");
+        ImGui::DragFloat3("camTarget", camTarget, .1f, -100.0f, 100.0f);
         
         if (!autoPan)
             ImGui::SliderAngle("vAngle", &v_angle,-180.0f,180.0f);
@@ -137,11 +141,12 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, std::vector<M
             v_angle = fmod(glfwGetTime()/4.0f, glm::pi<float>() *2.0) - glm::pi<float>();
 
         ImGui::DragFloat("Zoom", &(camera.Zoom), .5f,12.0f, 120.0f);
-        pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+        RC->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
         
-        vMat = glm::mat4(1.0f);
-        vMat = glm::translate(vMat, -glm::vec3(v_transVec[0],v_transVec[1],v_transVec[2]));
-        vMat = glm::rotate(vMat, -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
+        glm::mat4 vMat = glm::rotate(glm::mat4(1.0f), -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
+
+        RC->camera.position = vMat * glm::vec4(v_transVec[0], v_transVec[1], v_transVec[2], 1.0f);
+        RC->camera.target = glm::vec4(camTarget[0], camTarget[1], camTarget[2], 1.0f);
 
         for (int i = 0; i < 3; i++)
         {

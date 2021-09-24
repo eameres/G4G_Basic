@@ -31,9 +31,12 @@
 
 #include "drawImGui.hpp"
 
-glm::mat4 pMat; // perspective matrix
-glm::mat4 vMat; // view matrix
-glm::vec3 cPos;
+//glm::mat4 pMat; // perspective matrix
+//glm::mat4 vMat; // view matrix
+//glm::vec3 cPos;
+
+
+glm::mat4 *gCameraProjection; // perspective matrix
 
 Camera camera;
 
@@ -105,6 +108,8 @@ void setupDepthMap() {
 int main()
 {
     RenderContext RC;
+
+    gCameraProjection = &RC.camera.projection;  // hack for the viewport callback function to set the projection matrix
 
     namespace fs = std::filesystem;
     std::cout << "Current path is " << fs::current_path() << '\n';
@@ -205,40 +210,42 @@ int main()
     Material depthMaterial(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
     SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "first quad"
-    RC.renderers.push_back(&mySky); // add it to the render list
+    RC.addRenderer(&mySky); // add it to the render list
 
     
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(.10f, .10f, .10f));
 
     ObjRenderer shuttle("data/sponza.obj_",&shuttleMaterial, tf2);
-    RC.renderers.push_back(&shuttle);
+    RC.addRenderer(&shuttle);
 
     nCubeRenderer cube(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
-    RC.renderers.push_back(&cube);
+    RC.addRenderer(&cube);
 
-    TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-    RC.renderers.push_back(&torus);
 
     SphereRenderer sphere(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
-    RC.renderers.push_back(&sphere);
-    
-    Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    RC.renderers.push_back(cubeParticles);
+    RC.addRenderer(&sphere);
 
     nCubeRenderer lightCube(&white, glm::mat4(1.0f));
-    RC.renderers.push_back(&lightCube);
+    RC.addRenderer(&lightCube);
+
+    RC.addChild();
+
+    TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    RC.addRenderer(&torus);
+
+    Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    RC.addRenderer(cubeParticles);
+
 
     QuadRenderer frontQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
-    RC.renderers.push_back(&frontQuad); // add it to the render list
+    RC.addRenderer(&frontQuad); // add it to the render list
 
     QuadRenderer backQuad(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
-    RC.renderers.push_back(&backQuad); // add it to the render list
-
+    RC.addRenderer(&backQuad); // add it to the render list
    
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     fQuad.enabled = false;
-    
 
     // render loop
     // -----------
@@ -249,8 +256,13 @@ int main()
     scrn_width = viewportDims[2];
     scrn_height = viewportDims[3];
     //glViewport(0, 0, scrn_width, scrn_height);
+    // 
     // set up the perspective and the camera
-    pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+    RC.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+
+    float near_plane = 1.0f, far_plane = 7.50f;
+    
+    RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, near_plane, far_plane);
 
     double lastTime = glfwGetTime();
 
@@ -274,19 +286,18 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        // render background
-        // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        //glClearDepthf(999.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
+        // moving light source, must set it's position...
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
-        glm::vec4 lightPos = rotate * glm::vec4(-4, 1.5, 0.0, 1.0);
-        //lightPos = glm::vec4(-1, 1.0, 0.0, 1.0);
+        RC.light.position = rotate * glm::vec4(-4.0f, 2.0f,0.0f, 1.0f);
 
-        lightCube.setTranslate((glm::vec3)lightPos);
-        
+        RC.setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
+
+        // show a cube from that position
+        lightCube.setTranslate(RC.light.position);
         
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -295,23 +306,9 @@ int main()
         glEnable(GL_DEPTH_TEST);
         glClear(GL_DEPTH_BUFFER_BIT);
         
-        
-        float near_plane =1.0f, far_plane = 7.50f;
-        glm::mat4 lightProjection = glm::ortho(-2.0f,2.0f, -2.0f, 2.0f, near_plane, far_plane);
-        
-        //lightProjection = glm::mat4(1.0);
-        glm::mat4 lightView = glm::lookAt(glm::vec3(lightPos),
-                                          glm::vec3( 0.0f, 0.0f,  0.0f),
-                                          glm::vec3( 0.0f, 1.0f,  0.0f));
-        
-        // call each of the queued renderers
-        for(Renderer *r : RC.renderers)
-        {
-            Material *temp = r->myMaterial;
-            //r->myMaterial = &depthMaterial;
-            r->render(lightView, lightProjection, deltaTime, lightPos);
-            r->myMaterial = temp;
-        }
+        // render from the lights perspective and position to create the shadowMap
+        RC.renderFrom( RC.light,deltaTime);
+
         glViewport(0, 0, scrn_width, scrn_height);
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -320,13 +317,9 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
-        
-        // call each of the queued renderers
-        for(Renderer *r : RC.renderers)
-        {
-            r->render(vMat, pMat, deltaTime, lightPos);
-        }
-        
+
+        // render from the cameras position and perspective  this may or may not be offscreen 
+        RC.renderFrom(RC.camera, deltaTime);
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -334,10 +327,10 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
 
-        fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, lightPos);
+        fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, RC.light.position,RC.camera.position);
         
         // draw imGui over the top
-        drawIMGUI(shaders, &frontQuad,Material::materialList,(ParticleRenderer *) cubeParticles);
+        drawIMGUI(shaders, &frontQuad,Material::materialList,(ParticleRenderer *) cubeParticles,&RC);
 
         glfwSwapBuffers(window);
     }
@@ -367,5 +360,5 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     // make sure the viewport matches the new window dimensions
     glViewport(0, 0, scrn_width = width, scrn_height = height);
 
-    pMat = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = (float)width / (float)height, 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
+    *gCameraProjection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = (float)width / (float)height, 0.01f, 1000.0f);	//  1.0472 radians = 60 degrees
 }
