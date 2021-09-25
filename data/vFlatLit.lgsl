@@ -26,8 +26,8 @@ out VS_OUT{
 
 void main()
 {
-	vs_out.FragPos = vec3(m * vec4(aPos, 1.0));
-    vs_out.Normal = transpose(inverse(mat3(m))) * aNormal;
+	vs_out.FragPos = vec3(v* m * vec4(aPos, 1.0));
+    vs_out.Normal = transpose(inverse(mat3(v*m))) * aNormal;
     //vs_out.TexCoords = aTexCoords;
     vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
     
@@ -41,10 +41,10 @@ void main()
 	else if (gl_VertexID %3 == 2)
 		d1 = vec3(0,0,1);
 
-    FragPos = vec3(m * vec4( aPos, 1.0)  );
+    FragPos = vec3(v*m * vec4( aPos, 1.0)  );
     //FragPos = vec3(m * (vec4( aPos + (aNormal*sin(myTime)/5.0), 1.0) ) );
-    Normal = mat3(transpose(inverse(m))) * aNormal;  
+    Normal = mat3(transpose(inverse(v*m))) * aNormal;  
     
-    gl_Position = p * v * vec4(FragPos, 1.0);
+    gl_Position = p * vec4(FragPos, 1.0);
 }
 

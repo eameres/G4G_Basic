@@ -108,6 +108,7 @@ void setupDepthMap() {
 int main()
 {
     RenderContext RC;
+    treeNode* base, * l1, *l2;
 
     gCameraProjection = &RC.camera.projection;  // hack for the viewport callback function to set the projection matrix
 
@@ -209,14 +210,19 @@ int main()
     Material offScreenMaterial(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     Material depthMaterial(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
-    SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "first quad"
-    RC.addRenderer(&mySky); // add it to the render list
+    SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "skybox"
+    //RC.addRenderer(&mySky); // add it to the render list
 
-    
-    glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+    glm::mat4 tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(.10f, .10f, .10f));
 
-    ObjRenderer shuttle("data/sponza.obj_",&shuttleMaterial, tf2);
+    ObjRenderer sponza("data/sponza.obj_", &shuttleMaterial, tf2);
+   // RC.addRenderer(&shuttle);
+
+    tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
+    tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
+
+    ObjRenderer shuttle("data/shuttle.obj_",&shuttleMaterial, tf2);
     RC.addRenderer(&shuttle);
 
     nCubeRenderer cube(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
@@ -229,22 +235,31 @@ int main()
     nCubeRenderer lightCube(&white, glm::mat4(1.0f));
     RC.addRenderer(&lightCube);
 
-    RC.addChild();
-
-    TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
-    RC.addRenderer(&torus);
-
-    Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    RC.addRenderer(cubeParticles);
-
+    l1 = RC.addChild();
 
     QuadRenderer frontQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
     RC.addRenderer(&frontQuad); // add it to the render list
 
     QuadRenderer backQuad(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
     RC.addRenderer(&backQuad); // add it to the render list
-   
-    QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
+
+    Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    RC.addRenderer(cubeParticles);
+
+    l2 = RC.addChild();
+
+    TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 1.0f, 0.0f)));
+    RC.addRenderer(&torus);
+
+
+    //nCubeRenderer cube2(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 0.0f)));
+    //RC.addRenderer(&cube2);
+
+
+    //SphereRenderer sphere2(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(2.0f, -2.0f, 0.0f)));
+    //RC.addRenderer(&sphere2);
+
+      QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     fQuad.enabled = false;
 
     // render loop
@@ -294,7 +309,8 @@ int main()
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
         RC.light.position = rotate * glm::vec4(-4.0f, 2.0f,0.0f, 1.0f);
 
-        RC.setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
+        l1->xform = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
+        l2->xform = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime()*2.0f, glm::vec3(0, 1, 0.0f));
 
         // show a cube from that position
         lightCube.setTranslate(RC.light.position);
@@ -313,10 +329,12 @@ int main()
 
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+        
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
+
+        mySky.render(glm::mat4(glm::mat3(glm::lookAt(RC.camera.position, RC.camera.target, RC.camera.up))), RC.camera.projection, deltaTime, RC.light.position, RC.camera.position);
 
         // render from the cameras position and perspective  this may or may not be offscreen 
         RC.renderFrom(RC.camera, deltaTime);

@@ -11,4 +11,5 @@ void main()
 {
    //FragColor = vec4(1,0,0,1);//ourColor;
    FragColor = texture(albedo,varyingUV);
+   FragColor = vec4(1,1,1,1);
 }

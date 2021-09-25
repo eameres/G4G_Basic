@@ -243,11 +243,12 @@ public:
         currNode->group.push_back(t);
     }    
     
-    void addChild() {
+    treeNode *addChild() {
         treeNode* child = new treeNode();
 
         currNode->children.push_back(child);
         currNode = child;
+        return currNode;
     }
 
     void setXform(glm::mat4 _xform) {
@@ -262,9 +263,10 @@ public:
 
     void renderFrom(emitterCollector ec, double deltaTime) {
 
-        glm::mat4 vMat = glm::lookAt(ec.position, ec.target, ec.up);
+        glm::mat4 pMat = ec.projection * glm::lookAt(ec.position, ec.target, ec.up);
+        glm::mat4 mmMat = glm::mat4(1.0);
 
-        tree->traverse(vMat, ec.projection, deltaTime, this);
+        tree->traverse(mmMat, pMat, deltaTime, this);
     }
 };
 
