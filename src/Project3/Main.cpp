@@ -164,6 +164,14 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
+    GLint viewportDims[4];
+    
+    glGetIntegerv( GL_VIEWPORT, viewportDims );
+    scrn_width = viewportDims[2];
+    scrn_height = viewportDims[3];
+    //scrn_width = 1280;
+    //scrn_height = 720;
+    
     setupTextures(texture);
     setupFrameBuffer();
     setupDepthMap();
@@ -269,11 +277,7 @@ int main()
     // render loop
     // -----------
 
-    GLint viewportDims[4];
     
-    glGetIntegerv( GL_VIEWPORT, viewportDims );
-    scrn_width = viewportDims[2];
-    scrn_height = viewportDims[3];
     //glViewport(0, 0, scrn_width, scrn_height);
     // 
     // set up the perspective and the camera
