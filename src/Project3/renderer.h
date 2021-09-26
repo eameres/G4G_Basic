@@ -220,13 +220,23 @@ struct emitterCollector { // a light or camera common attributes
 
 struct treeNode {
 
+private:
     std::vector<treeNode*> children;
     std::vector<Renderer*> group;
     glm::mat4 xform;
+    treeNode* parent;
 
-    treeNode() {
-        xform = glm::mat4(1.0f);
+public:
+    treeNode(glm::mat4 xf, treeNode *p) {
+        xform = xf;
+        parent = p;
     }
+    void setXform(glm::mat4 xf) { xform = xf; }
+
+    void addRenderer(Renderer* r) { group.push_back(r); }
+    treeNode* addChild(glm::mat4 xf) { children.push_back(new treeNode(xf, this)); return children.back(); }
+    treeNode* getParent() { return this->parent; }
+
     void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, RenderContext* RC);
 };
 
@@ -239,26 +249,26 @@ struct RenderContext {
     treeNode *currNode;
 
 public:
-    void addRenderer(Renderer* t) {
-        currNode->group.push_back(t);
-    }    
+    void addRenderer(Renderer* r) { currNode->addRenderer(r); }
     
-    treeNode *addChild() {
-        treeNode* child = new treeNode();
-
-        currNode->children.push_back(child);
-        currNode = child;
+    treeNode *addChild(glm::mat4 xf) {
+        currNode = currNode->addChild(xf);
         return currNode;
     }
 
-    void setXform(glm::mat4 _xform) {
-        currNode->xform = _xform;
+    treeNode* getParent() {
+        currNode = currNode->getParent();
+        return currNode;
+    }
+
+    void setXform(glm::mat4 xf) {
+        currNode->setXform( xf );
     }
 
     RenderContext() {
         camera.up = glm::vec3(0.0, 1.0, 0.0);
         light.up = glm::vec3(0.0, 1.0, 0.0);
-        currNode = tree = new treeNode();
+        currNode = tree = new treeNode(glm::mat4(1), (treeNode*)NULL);
     };
 
     void renderFrom(emitterCollector ec, double deltaTime) {
