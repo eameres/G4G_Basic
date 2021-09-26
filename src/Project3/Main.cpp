@@ -146,7 +146,9 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // needed if we are drawing directly to the window (for now)
+    //glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -169,15 +171,12 @@ int main()
     glGetIntegerv( GL_VIEWPORT, viewportDims );
     scrn_width = viewportDims[2];
     scrn_height = viewportDims[3];
-    //scrn_width = 1280;
-    //scrn_height = 720;
     
     setupTextures(texture);
     setupFrameBuffer();
     setupDepthMap();
 
     std::vector<Shader*> shaders;   // pave the way for "scene" rendering
-    //std::vector<Renderer*> renderers;
     
     // declare and intialize our base shader
     Shader *ourShader = new Shader("data/vertex.lgsl", "data/fragment.lgsl","base");
@@ -221,21 +220,14 @@ int main()
     SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "skybox"
     //RC.addRenderer(&mySky); // add it to the render list
 
-    glm::mat4 tf2 = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-    tf2 = glm::scale(tf2, glm::vec3(.10f, .10f, .10f));
-
-    //ObjRenderer sponza("data/sponza.obj_", &shuttleMaterial, tf2);
+    //ObjRenderer sponza("data/sponza.obj_", &shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(.10f, .10f, .10f)));
    // RC.addRenderer(&shuttle);
 
-    tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f));
-    tf2 = glm::scale(tf2, glm::vec3(2.0f, 2.0f, 2.0f));
-
-    ObjRenderer shuttle("data/shuttle.obj_",&shuttleMaterial, tf2);
+    ObjRenderer shuttle("data/shuttle.obj_",&shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f, 2.0f, 2.0f)));
     RC.addRenderer(&shuttle);
 
     nCubeRenderer cube(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
     RC.addRenderer(&cube);
-
 
     SphereRenderer sphere(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
     RC.addRenderer(&sphere);
@@ -245,15 +237,16 @@ int main()
 
     l1 = RC.addChild(glm::mat4(1));
 
+    Renderer* cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    RC.addRenderer(cubeParticles);
+
     QuadRenderer frontQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
     RC.addRenderer(&frontQuad); // add it to the render list
 
     QuadRenderer backQuad(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
     RC.addRenderer(&backQuad); // add it to the render list
 
-    Renderer *cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    RC.addRenderer(cubeParticles);
-
+    
     l2 = RC.addChild(glm::mat4(1));
 
     TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
@@ -261,17 +254,23 @@ int main()
 
     RC.getParent();
     l3 = RC.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
-    
-    nCubeRenderer cube2(&litMaterial, glm::mat4(.25f));
-    RC.addRenderer(&cube2);
 
-    nCubeRenderer cube3(&litMaterial, glm::translate(glm::mat4(.15f),glm::vec3(0.0f, -5.0f, 0.0f)));
-    RC.addRenderer(&cube3);
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++) 
+            for (int k = 0; k < 3; k++) {
+                glm::mat4 xf;
 
-    //SphereRenderer sphere2(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(5.0f, -5.0f, 0.0f)));
-    //RC.addRenderer(&sphere2);
+                float x = i, y = j,z = k;
+                xf = glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(x * .33, y * .33, k *.33)), glm::vec3(.20));
+                Renderer* nC;
+                if ((j == 1) && (k == 1) && (i == 1))
+                    nC = new SphereRenderer(&litMaterial, xf);
+                else
+                    nC = new nCubeRenderer(&litMaterial, xf);
+                RC.addRenderer(nC);
+            }
 
-      QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
+    QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     fQuad.enabled = false;
 
     // render loop
@@ -283,7 +282,7 @@ int main()
     // set up the perspective and the camera
     RC.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
 
-    float near_plane = 1.0f, far_plane = 7.50f;
+    float near_plane =1.0f, far_plane = 7.5f;
     
     RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, near_plane, far_plane);
 
@@ -315,13 +314,13 @@ int main()
 
         // moving light source, must set it's position...
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
-        RC.light.position = rotate * glm::vec4(-4.0f, 2.0f,0.0f, 1.0f);
+        RC.light.position = rotate * glm::vec4(-4.0f, 1.5f,0.0f, 1.0f);
 
         l1->setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
         l2->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
         l3->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
         // show a cube from that position
-        lightCube.setTranslate(RC.light.position);
+        lightCube.modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), RC.light.position), glm::vec3(.25f));
         
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
