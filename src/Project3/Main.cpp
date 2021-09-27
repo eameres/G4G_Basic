@@ -28,13 +28,13 @@
 #include "camera.h"
 #include "renderer.h"
 #include "textures.h"
+#include "SceneGraph.h"
 
 #include "drawImGui.hpp"
 
 //glm::mat4 pMat; // perspective matrix
 //glm::mat4 vMat; // view matrix
 //glm::vec3 cPos;
-
 
 glm::mat4 *gCameraProjection; // perspective matrix
 
@@ -105,10 +105,30 @@ void setupDepthMap() {
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+void cubeOfCubes(RenderContext *RC, Material *m1, Material *m2) 
+{
+    for (int i = -1; i < 2; i++)
+        for (int j = -1; j < 2; j++)
+            for (int k = -1; k < 2; k++) {
+                glm::mat4 xf;
+
+                float x = i, y = j, z = k;
+                xf = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(x * .33, y * .33, k * .33)), glm::vec3(.20)), .8f, glm::vec3(1, 1, 0));
+                Renderer* nC;
+                if ((j == 0) && (k == 0) && (i == 0))
+                    nC = new SphereRenderer(m1, xf);
+                else if ((j == k) || (i == j))
+                    nC = new nCubeRenderer(m2, xf);
+                else
+                    nC = new nCubeRenderer(m1, xf);
+                RC->addRenderer(nC);
+            }
+}
 int main()
 {
     RenderContext RC;
-    treeNode* base, * l1, *l2, *l3;
+    treeNode* base, * l1 = NULL, *l2 = NULL, *l3 = NULL;
 
     gCameraProjection = &RC.camera.projection;  // hack for the viewport callback function to set the projection matrix
 
@@ -179,20 +199,20 @@ int main()
     std::vector<Shader*> shaders;   // pave the way for "scene" rendering
     
     // declare and intialize our base shader
-    Shader *ourShader = new Shader("data/vertex.lgsl", "data/fragment.lgsl","base");
-    shaders.push_back(ourShader);
+    Shader *baseShader = new Shader("data/vertex.lgsl", "data/fragment.lgsl","base");
+    shaders.push_back(baseShader);
     
     // declare and intialize shader with colored vertices
-    Shader *tShader = new Shader("data/vertColors.lgsl", "data/fragColors.lgsl","colored");
-    shaders.push_back(tShader);
+    Shader *colShader = new Shader("data/vertColors.lgsl", "data/fragColors.lgsl","colored");
+    shaders.push_back(colShader);
     
     // declare and intialize shader with texture(s)
-    Shader *txShader = new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
-    shaders.push_back(txShader);
+    Shader *texturedEnvShader = new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
+    shaders.push_back(texturedEnvShader);
     
     // declare and intialize shader with ADS lighting
-    Shader *flShader = new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit");
-    shaders.push_back(flShader);
+    Shader *phongShadowedShader = new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit");
+    shaders.push_back(phongShadowedShader);
 
     // declare and intialize skybox shader
     Shader *skyShader = new Shader("data/vSky.lgsl", "data/fSky.lgsl", "Skybox");
@@ -207,23 +227,23 @@ int main()
     Shader* postShader = new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
     shaders.push_back(postShader);
     
-    Material white(ourShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
-    Material coloredVerts(tShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material white(baseShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
+    Material coloredVerts(colShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     Material pMaterial(particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
-    Material litMaterial(flShader, texture[0], depthMap, true);
+    Material litMaterial(phongShadowedShader, texture[0], depthMap, true);
     Material background(skyShader,texture[3], glm::vec4(-1.0));
-    Material shuttleMaterial(txShader,texture[2], texture[3]);
-    Material checkers(txShader,texture[0], texture[3]);
+    Material shuttleMaterial(texturedEnvShader,texture[2], texture[3]);
+    Material checkers(texturedEnvShader,texture[0], texture[3]);
     Material offScreenMaterial(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
     Material depthMaterial(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
     SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "skybox"
-    //RC.addRenderer(&mySky); // add it to the render list
+    //RC.addRenderer(&mySky); // don't add the skybox to the regular render scene
 
-    //ObjRenderer sponza("data/sponza.obj_", &shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(.10f, .10f, .10f)));
-   // RC.addRenderer(&shuttle);
+    ObjRenderer sponza("data/sponza.obj_", &litMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f)));
+    RC.addRenderer(&sponza);
 
-    ObjRenderer shuttle("data/shuttle.obj_",&shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f, 2.0f, 2.0f)));
+    ObjRenderer shuttle("data/shuttle.obj_",&shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f)));
     RC.addRenderer(&shuttle);
 
     nCubeRenderer cube(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
@@ -234,7 +254,7 @@ int main()
 
     nCubeRenderer lightCube(&white, glm::mat4(1.0f));
     RC.addRenderer(&lightCube);
-
+    
     l1 = RC.addChild(glm::mat4(1));
 
     Renderer* cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
@@ -253,23 +273,11 @@ int main()
     RC.addRenderer(&torus);
 
     RC.getParent();
-    l3 = RC.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
+    l3 = RC.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    
+    cubeOfCubes(&RC,&checkers,&litMaterial);
 
-    for (int i = 0; i < 3; i++)
-        for (int j = 0; j < 3; j++) 
-            for (int k = 0; k < 3; k++) {
-                glm::mat4 xf;
-
-                float x = i, y = j,z = k;
-                xf = glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(x * .33, y * .33, k *.33)), glm::vec3(.20));
-                Renderer* nC;
-                if ((j == 1) && (k == 1) && (i == 1))
-                    nC = new SphereRenderer(&litMaterial, xf);
-                else
-                    nC = new nCubeRenderer(&litMaterial, xf);
-                RC.addRenderer(nC);
-            }
-
+    // full screen quad needs to be scaled by 2 since the quad is designed around [ -0.5, +0.5 ]
     QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     fQuad.enabled = false;
 
@@ -279,12 +287,13 @@ int main()
     
     //glViewport(0, 0, scrn_width, scrn_height);
     // 
-    // set up the perspective and the camera
+    // set up the perspective projection for the camera and the light
+    //
     RC.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+    RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
 
-    float near_plane =1.0f, far_plane = 7.5f;
-    
-    RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, near_plane, far_plane);
+    RC.camera.position = glm::vec4(0, 0, -3, 1.0f);
+    RC.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
     double lastTime = glfwGetTime();
 
@@ -308,52 +317,54 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
+        // animating the three levels of our hierarchy
+        if (l1 != NULL) l1->setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
+        if (l2 != NULL)l2->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
+        if (l3 != NULL)l3->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
 
         // moving light source, must set it's position...
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
-        RC.light.position = rotate * glm::vec4(-4.0f, 1.5f,0.0f, 1.0f);
+        RC.light.position = rotate * glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
-        l1->setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
-        l2->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
-        l3->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
         // show a cube from that position
         lightCube.modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), RC.light.position), glm::vec3(.25f));
-        
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glEnable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        
-        // render from the lights perspective and position to create the shadowMap
-        RC.renderFrom( RC.light,deltaTime);
 
-        glViewport(0, 0, scrn_width, scrn_height);
+        {
+            // first we do the "shadow pass"  really just for creating a depth buffer from the light's perspective
+           
+            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+            glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+            glEnable(GL_DEPTH_TEST);
+            glClear(GL_DEPTH_BUFFER_BIT);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        //glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
+            // render from the lights perspective and position to create the shadowMap
+            RC.renderFrom(RC.light, deltaTime);
+        }
+        {
+            // do the "normal" drawing
+            glViewport(0, 0, scrn_width, scrn_height);
 
-        mySky.render(glm::mat4(glm::mat3(glm::lookAt(RC.camera.position, RC.camera.target, RC.camera.up))), RC.camera.projection, deltaTime, RC.light.position, RC.camera.position);
+            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // offscreen
+            //glBindFramebuffer(GL_FRAMEBUFFER, 0);         // onscreen
 
-        // render from the cameras position and perspective  this may or may not be offscreen 
-        RC.renderFrom(RC.camera, deltaTime);
-        
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glClearColor(0.2f, 0.3f, 0.3f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_DEPTH_TEST);
+            glDisable(GL_DEPTH_TEST);
+            mySky.render(glm::mat4(glm::mat3(glm::lookAt(RC.camera.position, RC.camera.target, RC.camera.up))), RC.camera.projection, deltaTime, RC.light.position, RC.camera.position);
+            
+            glEnable(GL_DEPTH_TEST);
 
-        fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, RC.light.position,RC.camera.position);
-        
+            // render from the cameras position and perspective  this may or may not be offscreen 
+            RC.renderFrom(RC.camera, deltaTime);
+        }
+        {
+            // assuming the previous was offscreen, we now need to draw a quad with the results to the screen!
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            glDisable(GL_DEPTH_TEST);
+
+            fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, RC.light.position, RC.camera.position);
+        }
         // draw imGui over the top
         drawIMGUI(shaders, &frontQuad,Material::materialList,(ParticleRenderer *) cubeParticles,&RC);
 
@@ -367,10 +378,10 @@ int main()
     delete cubeParticles;
     deleteTextures(texture);
     
-    delete ourShader;
-    delete tShader;
-    delete txShader;
-    delete flShader;
+    delete baseShader;
+    delete colShader;
+    delete texturedEnvShader;
+    delete phongShadowedShader;
     delete particleShader;
     delete depthShader;
     delete skyShader;

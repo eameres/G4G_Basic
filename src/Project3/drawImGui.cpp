@@ -28,6 +28,7 @@
 
 #include "camera.h"
 #include "renderer.h"
+#include "SceneGraph.h"
 
 #include "drawImGui.hpp"
 

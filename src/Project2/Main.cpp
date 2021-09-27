@@ -54,8 +54,8 @@ class QuadRenderer : public renderer {
 
 protected: 
     unsigned int indices[6] = {  // note that we start from 0!
-        0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
+        3, 1, 0,  // first Triangle
+        3, 2, 1   // second Triangle
     };
 
     public : QuadRenderer(Shader *shader,glm::mat4 m) 
@@ -213,6 +213,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -274,6 +275,10 @@ int main()
     // -----------
 
     double lastTime = glfwGetTime();
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     while (!glfwWindowShouldClose(window))
     {
