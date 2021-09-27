@@ -196,6 +196,16 @@ int main()
     setupFrameBuffer();
     setupDepthMap();
 
+    // 
+    // set up the perspective projection for the camera and the light
+    //
+    RC.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+    RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
+    RC.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
+
+    RC.camera.position = glm::vec4(0, 0, -5, 1.0f);
+    RC.camera.target = glm::vec4(0, 0, 0, 1.0f);
+
     std::vector<Shader*> shaders;   // pave the way for "scene" rendering
     
     // declare and intialize our base shader
@@ -227,73 +237,68 @@ int main()
     Shader* postShader = new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
     shaders.push_back(postShader);
     
-    Material white(baseShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
-    Material coloredVerts(colShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    Material pMaterial(particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
-    Material litMaterial(phongShadowedShader, texture[0], depthMap, true);
-    Material background(skyShader,texture[3], glm::vec4(-1.0));
-    Material shuttleMaterial(texturedEnvShader,texture[2], texture[3]);
-    Material checkers(texturedEnvShader,texture[0], texture[3]);
-    Material offScreenMaterial(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    Material depthMaterial(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material* white = new Material(baseShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
+    Material* coloredVerts = new Material(colShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material* pMaterial = new Material(particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
+    Material* litMaterial = new Material(phongShadowedShader, texture[0], depthMap, true);
+
+    Material* shuttleMaterial = new Material(texturedEnvShader,texture[2], texture[3]);
+    Material* checkers = new Material(texturedEnvShader,texture[0], texture[3]);
+
+    Material* background = new Material(skyShader, texture[3], glm::vec4(-1.0));
+    Material* offScreenMaterial = new Material(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    Material* depthMaterial = new Material(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
-    SkyboxRenderer mySky(&background, glm::mat4(1.0f)); // our "skybox"
-    //RC.addRenderer(&mySky); // don't add the skybox to the regular render scene
-
-    ObjRenderer sponza("data/sponza.obj_", &litMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f)));
-    RC.addRenderer(&sponza);
-
-    ObjRenderer shuttle("data/shuttle.obj_",&shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f)));
-    RC.addRenderer(&shuttle);
-
-    nCubeRenderer cube(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
+    nCubeRenderer cube(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
     RC.addRenderer(&cube);
 
-    SphereRenderer sphere(&litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
-    RC.addRenderer(&sphere);
-
-    nCubeRenderer lightCube(&white, glm::mat4(1.0f));
+    nCubeRenderer lightCube(white, glm::translate(glm::mat4(1.0f), RC.light.position));
     RC.addRenderer(&lightCube);
+
+    SphereRenderer sphere(litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
+    RC.addRenderer(&sphere);
+    
+    ObjRenderer sponza("data/sponza.obj_", litMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f)));
+    RC.addRenderer(&sponza);
+
+    ObjRenderer shuttle("data/shuttle.obj_", shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f)));
+    RC.addRenderer(&shuttle);
     
     l1 = RC.addChild(glm::mat4(1));
 
-    Renderer* cubeParticles = new ParticleRenderer(&pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    RC.addRenderer(cubeParticles);
+    ParticleRenderer cubeParticles(pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    //RC.addRenderer(&cubeParticles);
 
-    QuadRenderer frontQuad(&checkers, glm::mat4(1.0f)); // our "first quad"
+    QuadRenderer frontQuad(checkers, glm::mat4(1.0f)); // our "first quad"
     RC.addRenderer(&frontQuad); // add it to the render list
 
-    QuadRenderer backQuad(&coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
+    QuadRenderer backQuad(coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
     RC.addRenderer(&backQuad); // add it to the render list
 
-    
     l2 = RC.addChild(glm::mat4(1));
 
-    TorusRenderer torus(&litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    TorusRenderer torus(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
     RC.addRenderer(&torus);
 
     RC.getParent();
     l3 = RC.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
     
-    cubeOfCubes(&RC,&checkers,&litMaterial);
+    //cubeOfCubes(&RC,checkers,litMaterial);
+    
+
+    // skybox is special and doesn't belong to the SceneGraph
+    SkyboxRenderer mySky(background, glm::mat4(1.0f)); // our "skybox"
 
     // full screen quad needs to be scaled by 2 since the quad is designed around [ -0.5, +0.5 ]
-    QuadRenderer fQuad(&offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
-    fQuad.enabled = false;
+    QuadRenderer fQuad(offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
+    //fQuad.enabled = false;
 
     // render loop
     // -----------
 
     
     //glViewport(0, 0, scrn_width, scrn_height);
-    // 
-    // set up the perspective projection for the camera and the light
-    //
-    RC.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
-    RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
 
-    RC.camera.position = glm::vec4(0, 0, -3, 1.0f);
-    RC.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
     double lastTime = glfwGetTime();
 
@@ -366,7 +371,7 @@ int main()
             fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, RC.light.position, RC.camera.position);
         }
         // draw imGui over the top
-        drawIMGUI(shaders, &frontQuad,Material::materialList,(ParticleRenderer *) cubeParticles,&RC);
+        drawIMGUI(shaders, &frontQuad,Material::materialList,&cubeParticles,&RC);
 
         glfwSwapBuffers(window);
     }
@@ -375,16 +380,15 @@ int main()
     // ------------------------------------------------------------------
     glfwTerminate();
     
-    delete cubeParticles;
     deleteTextures(texture);
-    
-    delete baseShader;
-    delete colShader;
-    delete texturedEnvShader;
-    delete phongShadowedShader;
-    delete particleShader;
-    delete depthShader;
-    delete skyShader;
+
+     for (Shader* s : shaders)
+        delete s;
+
+     static std::vector<Material*> temp = Material::materialList;
+
+     for (Material* m : temp)
+         delete m;
     
     return 0;
 }

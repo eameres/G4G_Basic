@@ -188,6 +188,8 @@ void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, gl
 
     glm::mat4 mvp;
 
+    if (!enabled) return;
+
     myMaterial->use();
     myMaterial->myShader->setInt("skybox", 0);
 
@@ -302,6 +304,8 @@ void ParticleRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, 
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
+
+    if (!enabled) return;
 
     myMaterial->use();
 
