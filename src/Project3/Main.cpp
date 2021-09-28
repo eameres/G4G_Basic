@@ -20,6 +20,8 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <string>
+#include <map>
 #include <filesystem>
 
 #include "shader_s.h"
@@ -47,6 +49,8 @@ unsigned int scrn_height = 720;
 unsigned int texture[] = { 0,1,2,3 };
 
 #pragma warning( disable : 26451 )
+
+int main();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -128,7 +132,7 @@ void cubeOfCubes(SceneGraph *sg, Material *m1, Material *m2)
 int main()
 {
     SceneGraph scene;
-    treeNode* base, * l1 = NULL, *l2 = NULL, *l3 = NULL;
+    treeNode* base, * l1 = NULL, * l2 = NULL, * l3 = NULL;
 
     gCameraProjection = &scene.camera.projection;  // hack for the viewport callback function to set the projection matrix
 
@@ -154,7 +158,7 @@ int main()
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_SCALE_TO_MONITOR,GL_TRUE);
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GL_TRUE);
 #endif
     // glfw window creation
     // --------------------
@@ -187,11 +191,11 @@ int main()
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     GLint viewportDims[4];
-    
-    glGetIntegerv( GL_VIEWPORT, viewportDims );
+
+    glGetIntegerv(GL_VIEWPORT, viewportDims);
     scrn_width = viewportDims[2];
     scrn_height = viewportDims[3];
-    
+
     setupTextures(texture);
     setupFrameBuffer();
     setupDepthMap();
@@ -206,90 +210,86 @@ int main()
     scene.camera.position = glm::vec4(0, 0, -5, 1.0f);
     scene.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
-    std::vector<Shader*> shaders;   // pave the way for "scene" rendering
-    
     // create shaders and then materials that use the shaders (multiple materials can use the same shader)
 
-    // declare and intialize our base shader
-    Shader *baseShader = new Shader("data/vertex.lgsl", "data/fragment.lgsl","base");
-    shaders.push_back(baseShader);
-    
-    Material* white = new Material(baseShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
+    // Note that the Shader and Material classes use static maps of created instances of each
+    //  this is to avoid any global lists of each of them and avoid scope issues when referencing them
+    //  be careful when referencing them since the strings MUST match!
+    //  the maps are only used during setup and teardown, and not within the main loop, so efficiency isn't an issue
 
-    // declare and intialize shader with colored vertices
-    Shader *colShader = new Shader("data/vertColors.lgsl", "data/fragColors.lgsl","colored");
-    shaders.push_back(colShader);
-
-    Material* coloredVerts = new Material(colShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
-
-    // declare and intialize shader with texture(s)
-    Shader *texturedEnvShader = new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
-    shaders.push_back(texturedEnvShader);
-   
-    Material* shuttleMaterial = new Material(texturedEnvShader, texture[2], texture[3]);
-    Material* checkers = new Material(texturedEnvShader, texture[0], texture[3]);
-
-    // declare and intialize shader with ADS lighting
-    Shader *phongShadowedShader = new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit");
-    shaders.push_back(phongShadowedShader);
-
-    Material* litMaterial = new Material(phongShadowedShader, texture[0], depthMap, true);
-
-    // declare and intialize skybox shader
-    Shader *skyShader = new Shader("data/vSky.lgsl", "data/fSky.lgsl", "Skybox");
-    shaders.push_back(skyShader);
-
-    Material* background = new Material(skyShader, texture[3], glm::vec4(-1.0));
-
-    Shader *particleShader = new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
-    shaders.push_back(particleShader);
-    
-    Material* pMaterial = new Material(particleShader, -1, glm::vec4(1.0, 0.0, 0.0, 1.0));
-
-    Shader *depthShader = new Shader("data/vDepth.lgsl", "data/fDepth.lgsl", "Depth");
-    shaders.push_back(depthShader);
-
-    Material* depthMaterial = new Material(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
-
-    Shader* postShader = new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
-    shaders.push_back(postShader);
-    Material* offScreenMaterial = new Material(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    
+    {
+        // declare and intialize our base shader and white material
+        new Shader("data/vertex.lgsl", "data/fragment.lgsl", "base");
+        new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
+    }
+    {
+        // declare and intialize shader with colored vertices
+        new Shader("data/vertColors.lgsl", "data/fragColors.lgsl", "colored");
+        new Material(Shader::shaders["colored"], "coloredVerts", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    }
+    {
+        // declare and intialize shader with texture(s)
+        new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
+        new Material(Shader::shaders["textured"], "shuttle", texture[2], texture[3]);
+        new Material(Shader::shaders["textured"], "checkers", texture[0], texture[3]);
+    }
+    {
+        // declare and intialize shader with ADS lighting
+        new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "PhongShadowed");
+        new Material(Shader::shaders["PhongShadowed"], "litMaterial", texture[0], depthMap, true);
+    }
+    {
+        // declare and intialize skybox shader and background material
+        new Shader("data/vSky.lgsl", "data/fSky.lgsl", "SkyBox");
+        new Material(Shader::shaders["SkyBox"], "background", texture[3], glm::vec4(-1.0));
+    } 
+    {
+        new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
+        new Material(Shader::shaders["Particle"], "pMaterial", -1, glm::vec4(1.0, 0.0, 0.0, 1.0));
+    }
+    {
+        new Shader("data/vDepth.lgsl", "data/fDepth.lgsl", "Depth");
+        new Material(Shader::shaders["Depth"], "depthMaterial", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    }
+    {
+        new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
+        new Material(Shader::shaders["PostProcessing"], "offScreenMaterial", textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    }
     
     // Setup all of the objects to be rendererd and add them to the 
-    scene.addRenderer(new nCubeRenderer(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
+    scene.addRenderer(new nCubeRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
 
     nCubeRenderer* lightCube = NULL;
-    scene.addRenderer(lightCube = new nCubeRenderer(white, glm::translate(glm::mat4(1.0f), scene.light.position)));
+    scene.addRenderer(lightCube = new nCubeRenderer(Material::materials["white"], glm::translate(glm::mat4(1.0f), scene.light.position)));
 
-    scene.addRenderer(new SphereRenderer(litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
-    //scene.addRenderer(new ObjRenderer("data/sponza.obj_", litMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
-    scene.addRenderer(new ObjRenderer("data/shuttle.obj_", shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
+    scene.addRenderer(new SphereRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
+    scene.addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    scene.addRenderer(new ObjRenderer("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
     
     l1 = scene.addChild(glm::mat4(1));
 
     ParticleRenderer* cubeParticles = NULL;
-    scene.addRenderer(cubeParticles = new ParticleRenderer (pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
+    scene.addRenderer(cubeParticles = new ParticleRenderer (Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
     QuadRenderer* frontQuad = NULL;
-    scene.addRenderer(frontQuad = new QuadRenderer(checkers, glm::mat4(1.0f))); // our "first quad
+    scene.addRenderer(frontQuad = new QuadRenderer(Material::materials["checkers"], glm::mat4(1.0f))); // our "first quad
 
-    scene.addRenderer(new QuadRenderer (coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0)))); // our "second quad"
+    scene.addRenderer(new QuadRenderer (Material::materials["coloredVerts"], glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0)))); // our "second quad"
 
     l2 = scene.addChild(glm::mat4(1));
 
-    scene.addRenderer(new TorusRenderer(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+    scene.addRenderer(new TorusRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
     scene.getParent();
     l3 = scene.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
     
-    cubeOfCubes(&scene,checkers,litMaterial);
+    cubeOfCubes(&scene, Material::materials["checkers"], Material::materials["litMaterial"]);
 
     // skybox is special and doesn't belong to the SceneGraph
-    SkyboxRenderer mySky(background, glm::mat4(1.0f)); // our "skybox"
+    SkyboxRenderer mySky(Material::materials["background"], glm::mat4(1.0f)); // our "skybox"
 
     // full screen quad needs to be scaled by 2 since the quad is designed around [ -0.5, +0.5 ]
-    QuadRenderer fQuad(offScreenMaterial, glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
+    QuadRenderer fQuad(Material::materials["offScreenMaterial"], glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
     //fQuad.enabled = false;
 
     // render loop
@@ -366,7 +366,7 @@ int main()
             fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, scene.light.position, scene.camera.position);
         }
         // draw imGui over the top
-        drawIMGUI(shaders, frontQuad,Material::materialList,cubeParticles,&scene);
+        drawIMGUI(frontQuad,cubeParticles,&scene);
 
         glfwSwapBuffers(window);
     }
@@ -377,13 +377,15 @@ int main()
     
     deleteTextures(texture);
 
-     for (Shader* s : shaders)
-        delete s;
+    static std::map<std::string, Shader*> sTemp = Shader::shaders;
 
-     static std::vector<Material*> temp = Material::materialList;
+     for (const auto&[key,val] : sTemp)
+        delete val;
 
-     for (Material* m : temp)
-         delete m;
+     static std::map<std::string,Material*> mTemp = Material::materials;
+
+     for (const auto& [key, val] : mTemp)
+         delete val;
 
      static std::vector<Renderer*> tempR = scene.rendererList;
 

@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <map>
 
 class Shader
 {
@@ -15,6 +16,8 @@ public:
     const char* vertexPath;
     const char* fragmentPath;
     const char* name;
+
+    static std::map<std::string, Shader*> shaders;
 
 public:
     char vtext[2048], ftext[4192];
@@ -64,7 +67,13 @@ public:
         memcpy(ftext, fragmentCode.c_str(), fragmentCode.length());
         ftext[fragmentCode.length()] = 0;
 
+        shaders[name] = this;
+
         reload();
+    }
+    ~Shader()
+    {
+        shaders.erase(name);
     }
     void reload() {
         reload(vtext, ftext);

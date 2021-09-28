@@ -18,7 +18,7 @@ public :
 
     glm::mat4 modelMatrix;
 
-    Material* myMaterial;
+    Material* myMaterial = NULL;
 
 protected:
     void setupColorAttrib();

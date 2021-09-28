@@ -21,6 +21,7 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
+#include <map>
 #include <filesystem>
 
 #include "shader_s.h"
@@ -41,8 +42,7 @@ extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 extern unsigned int depthMap;
 
-void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, 
-    std::vector<Material*>materials,ParticleRenderer *particleSystem,
+void drawIMGUI(Renderer *myRenderer, ParticleRenderer *particleSystem,
     SceneGraph *sg) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
@@ -73,12 +73,11 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
-        Shader* gShader = shaders[0];
+        Shader* gShader = Shader::shaders["PhongShadowed"];
 
         if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
         {
-
-            for (Shader* s : shaders) {
+            for (const auto& [key, s] : Shader::shaders) {
                 if (ImGui::BeginTabItem(s->name))
                 {
                     gShader = s;
@@ -154,15 +153,15 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,
             ImGui::PushID(i);
 
             if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
-                materials[3]->textures[0] = texture[i];
+                Material::materials["checkers"]->textures[0] = texture[i];
             ImGui::PopID();
             ImGui::SameLine();
         }
 
         ImGui::NewLine();
 
-        ImGui::SliderFloat("shine5", &materials[2]->shine, 0.0, 1.0);
-        ImGui::SliderFloat("shine6", &materials[3]->shine, 0.0, 1.0);
+        ImGui::SliderFloat("shine5", &Material::materials["checkers"]->shine, 0.0, 1.0);
+        ImGui::SliderFloat("shine6", &Material::materials["shuttle"]->shine, 0.0, 1.0);
 
         ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
 

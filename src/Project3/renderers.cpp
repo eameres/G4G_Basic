@@ -16,7 +16,9 @@
 #include "renderer.h"
 #include "ImportedModel.h"
 
-std::vector<Material*> Material::materialList;
+std::map<std::string, Material*> Material::materials;
+std::map<std::string, Shader*> Shader::shaders;
+
 std::vector<Renderer*> Renderer::renderList;
 
 void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
@@ -25,6 +27,8 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
     glm::mat4 mvp;
 
     if (!enabled) return;
+
+    assert(myMaterial != NULL);
 
     myMaterial->use();
 

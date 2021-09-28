@@ -5,53 +5,57 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <vector>
+#include <map>
 #include "shader_s.h"
 
 class Material {
 public:
     Shader* myShader;
+    std::string name;
     GLint textures[8] = { 0,0,0,0,0,0,0,0 };
     float shine = 0.1f;
     bool shadow = false;
 
     glm::vec4 color;
 
-    static std::vector<Material*> materialList;
+    static std::map<std::string,Material*> materials;
 
 public:
-    Material(Shader* _shader, GLint _texture, glm::vec4 _color) {
+    Material(Shader* _shader, std::string _name, GLint _texture, glm::vec4 _color) {
+        assert(_shader != NULL);
         myShader = _shader;
         textures[0] = _texture;
         color = _color;
-
-        materialList.push_back(this);
+        name = _name;
+        materials[name] = this;
     }
-    Material(Shader* _shader, GLint _texture, GLint _envTexture) {
+    Material(Shader* _shader, std::string _name, GLint _texture, GLint _envTexture) {
+        assert(_shader != NULL);
         myShader = _shader;
         textures[0] = _texture;
         textures[1] = _envTexture;
         color = glm::vec4(1.0, 1.0, 1.0, 1.0);
         shadow = false;
-        materialList.push_back(this);
+        name = _name;
+        materials[name] = this;
     }
-    Material(Shader* _shader, GLint _texture, GLint depthMap, bool _shadow) {
+    Material(Shader* _shader, std::string _name, GLint _texture, GLint depthMap, bool _shadow) {
+        assert(_shader != NULL);
         myShader = _shader;
         textures[0] = _texture;
         textures[1] = depthMap;
         color = glm::vec4(1.0, 1.0, 1.0, 1.0);
         shadow = _shadow;
-        materialList.push_back(this);
+        name = _name;
+        materials[name] = this;
     }
     ~Material() {
-        std::vector<Material*>::const_iterator id;
-
-        id = find(materialList.begin(), materialList.end(), this);
-
-        if (id != materialList.end())
-            materialList.erase(id);
+        materials.erase(name);
     }
 
     void use() {
+
+        assert(myShader != NULL);
 
         myShader->use();
 
