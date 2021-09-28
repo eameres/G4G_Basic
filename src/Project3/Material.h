@@ -10,8 +10,7 @@
 class Material {
 public:
     Shader* myShader;
-    GLint texture;
-    GLint envTexture = 0;
+    GLint textures[8] = { 0,0,0,0,0,0,0,0 };
     float shine = 0.1f;
     bool shadow = false;
 
@@ -22,23 +21,23 @@ public:
 public:
     Material(Shader* _shader, GLint _texture, glm::vec4 _color) {
         myShader = _shader;
-        texture = _texture;
+        textures[0] = _texture;
         color = _color;
 
         materialList.push_back(this);
     }
     Material(Shader* _shader, GLint _texture, GLint _envTexture) {
         myShader = _shader;
-        texture = _texture;
-        envTexture = _envTexture;
+        textures[0] = _texture;
+        textures[1] = _envTexture;
         color = glm::vec4(1.0, 1.0, 1.0, 1.0);
         shadow = false;
         materialList.push_back(this);
     }
-    Material(Shader* _shader, GLint _texture, GLint _envTexture, bool _shadow) {
+    Material(Shader* _shader, GLint _texture, GLint depthMap, bool _shadow) {
         myShader = _shader;
-        texture = _texture;
-        envTexture = _envTexture;
+        textures[0] = _texture;
+        textures[1] = depthMap;
         color = glm::vec4(1.0, 1.0, 1.0, 1.0);
         shadow = _shadow;
         materialList.push_back(this);
@@ -57,18 +56,17 @@ public:
         myShader->use();
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, textures[0]);
         myShader->setInt("OurTexture", 0);
 
         glActiveTexture(GL_TEXTURE1);
 
         if (shadow)
-            glBindTexture(GL_TEXTURE_2D, envTexture);
+            glBindTexture(GL_TEXTURE_2D, textures[1]);
         else
-            glBindTexture(GL_TEXTURE_CUBE_MAP, envTexture);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, textures[1]);
 
         myShader->setInt("EnvTexture", 1);
-
         myShader->setInt("shadowMap", 1);
 
         glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));

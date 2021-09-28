@@ -25,6 +25,8 @@ struct emitterCollector { // a light or camera common attributes
     glm::mat4 projection;
 };
 
+struct SceneGraph;
+
 struct treeNode {
 
 private:
@@ -44,19 +46,24 @@ public:
     treeNode* addChild(glm::mat4 xf) { children.push_back(new treeNode(xf, this)); return children.back(); }
     treeNode* getParent() { return this->parent; }
 
-    void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, RenderContext* RC);
+    void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, SceneGraph * sg);
 };
 
-struct RenderContext {
+struct SceneGraph {
 
     emitterCollector camera;
     emitterCollector light;
+
+    std::vector<Renderer*> rendererList;
 
     treeNode* tree;
     treeNode* currNode;
 
 public:
-    void addRenderer(Renderer* r) { currNode->addRenderer(r); }
+    void addRenderer(Renderer* r) { 
+        currNode->addRenderer(r); 
+        rendererList.push_back(r);
+    }
 
     treeNode* addChild(glm::mat4 xf) {
         currNode = currNode->addChild(xf);
@@ -72,11 +79,11 @@ public:
         currNode->setXform(xf);
     }
 
-    RenderContext() {
+    SceneGraph() {
         camera.up = glm::vec3(0.0, 1.0, 0.0);
         light.up = glm::vec3(0.0, 1.0, 0.0);
         currNode = tree = new treeNode(glm::mat4(1), (treeNode*)NULL);
-    };
+    }
 
     void renderFrom(emitterCollector ec, double deltaTime) {
 

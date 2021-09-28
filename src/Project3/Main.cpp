@@ -106,7 +106,7 @@ void setupDepthMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void cubeOfCubes(RenderContext *RC, Material *m1, Material *m2) 
+void cubeOfCubes(SceneGraph *sg, Material *m1, Material *m2) 
 {
     for (int i = -1; i < 2; i++)
         for (int j = -1; j < 2; j++)
@@ -122,15 +122,15 @@ void cubeOfCubes(RenderContext *RC, Material *m1, Material *m2)
                     nC = new nCubeRenderer(m2, xf);
                 else
                     nC = new nCubeRenderer(m1, xf);
-                RC->addRenderer(nC);
+                sg->addRenderer(nC);
             }
 }
 int main()
 {
-    RenderContext RC;
+    SceneGraph scene;
     treeNode* base, * l1 = NULL, *l2 = NULL, *l3 = NULL;
 
-    gCameraProjection = &RC.camera.projection;  // hack for the viewport callback function to set the projection matrix
+    gCameraProjection = &scene.camera.projection;  // hack for the viewport callback function to set the projection matrix
 
     namespace fs = std::filesystem;
     std::cout << "Current path is " << fs::current_path() << '\n';
@@ -199,92 +199,91 @@ int main()
     // 
     // set up the perspective projection for the camera and the light
     //
-    RC.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
-    RC.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
-    RC.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
+    scene.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+    scene.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
+    scene.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
-    RC.camera.position = glm::vec4(0, 0, -5, 1.0f);
-    RC.camera.target = glm::vec4(0, 0, 0, 1.0f);
+    scene.camera.position = glm::vec4(0, 0, -5, 1.0f);
+    scene.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
     std::vector<Shader*> shaders;   // pave the way for "scene" rendering
     
+    // create shaders and then materials that use the shaders (multiple materials can use the same shader)
+
     // declare and intialize our base shader
     Shader *baseShader = new Shader("data/vertex.lgsl", "data/fragment.lgsl","base");
     shaders.push_back(baseShader);
     
+    Material* white = new Material(baseShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
+
     // declare and intialize shader with colored vertices
     Shader *colShader = new Shader("data/vertColors.lgsl", "data/fragColors.lgsl","colored");
     shaders.push_back(colShader);
-    
+
+    Material* coloredVerts = new Material(colShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+
     // declare and intialize shader with texture(s)
     Shader *texturedEnvShader = new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
     shaders.push_back(texturedEnvShader);
-    
+   
+    Material* shuttleMaterial = new Material(texturedEnvShader, texture[2], texture[3]);
+    Material* checkers = new Material(texturedEnvShader, texture[0], texture[3]);
+
     // declare and intialize shader with ADS lighting
     Shader *phongShadowedShader = new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "FlatLit");
     shaders.push_back(phongShadowedShader);
+
+    Material* litMaterial = new Material(phongShadowedShader, texture[0], depthMap, true);
 
     // declare and intialize skybox shader
     Shader *skyShader = new Shader("data/vSky.lgsl", "data/fSky.lgsl", "Skybox");
     shaders.push_back(skyShader);
 
+    Material* background = new Material(skyShader, texture[3], glm::vec4(-1.0));
+
     Shader *particleShader = new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
     shaders.push_back(particleShader);
     
+    Material* pMaterial = new Material(particleShader, -1, glm::vec4(1.0, 0.0, 0.0, 1.0));
+
     Shader *depthShader = new Shader("data/vDepth.lgsl", "data/fDepth.lgsl", "Depth");
     shaders.push_back(depthShader);
 
+    Material* depthMaterial = new Material(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+
     Shader* postShader = new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
     shaders.push_back(postShader);
-    
-    Material* white = new Material(baseShader, -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
-    Material* coloredVerts = new Material(colShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    Material* pMaterial = new Material(particleShader, -1, glm::vec4(1.0,0.0,0.0,1.0));
-    Material* litMaterial = new Material(phongShadowedShader, texture[0], depthMap, true);
-
-    Material* shuttleMaterial = new Material(texturedEnvShader,texture[2], texture[3]);
-    Material* checkers = new Material(texturedEnvShader,texture[0], texture[3]);
-
-    Material* background = new Material(skyShader, texture[3], glm::vec4(-1.0));
     Material* offScreenMaterial = new Material(postShader, textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    Material* depthMaterial = new Material(depthShader, -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     
-    nCubeRenderer cube(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f)));
-    RC.addRenderer(&cube);
-
-    nCubeRenderer lightCube(white, glm::translate(glm::mat4(1.0f), RC.light.position));
-    RC.addRenderer(&lightCube);
-
-    SphereRenderer sphere(litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f)));
-    RC.addRenderer(&sphere);
     
-    ObjRenderer sponza("data/sponza.obj_", litMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f)));
-    RC.addRenderer(&sponza);
+    // Setup all of the objects to be rendererd and add them to the 
+    scene.addRenderer(new nCubeRenderer(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
 
-    ObjRenderer shuttle("data/shuttle.obj_", shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f)));
-    RC.addRenderer(&shuttle);
+    nCubeRenderer* lightCube = NULL;
+    scene.addRenderer(lightCube = new nCubeRenderer(white, glm::translate(glm::mat4(1.0f), scene.light.position)));
+
+    scene.addRenderer(new SphereRenderer(litMaterial, glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
+    //scene.addRenderer(new ObjRenderer("data/sponza.obj_", litMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    scene.addRenderer(new ObjRenderer("data/shuttle.obj_", shuttleMaterial, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
     
-    l1 = RC.addChild(glm::mat4(1));
+    l1 = scene.addChild(glm::mat4(1));
 
-    ParticleRenderer cubeParticles(pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    //RC.addRenderer(&cubeParticles);
+    ParticleRenderer* cubeParticles = NULL;
+    scene.addRenderer(cubeParticles = new ParticleRenderer (pMaterial, glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
-    QuadRenderer frontQuad(checkers, glm::mat4(1.0f)); // our "first quad"
-    RC.addRenderer(&frontQuad); // add it to the render list
+    QuadRenderer* frontQuad = NULL;
+    scene.addRenderer(frontQuad = new QuadRenderer(checkers, glm::mat4(1.0f))); // our "first quad
 
-    QuadRenderer backQuad(coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0))); // our "second quad"
-    RC.addRenderer(&backQuad); // add it to the render list
+    scene.addRenderer(new QuadRenderer (coloredVerts, glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0)))); // our "second quad"
 
-    l2 = RC.addChild(glm::mat4(1));
+    l2 = scene.addChild(glm::mat4(1));
 
-    TorusRenderer torus(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    RC.addRenderer(&torus);
+    scene.addRenderer(new TorusRenderer(litMaterial, glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
-    RC.getParent();
-    l3 = RC.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    scene.getParent();
+    l3 = scene.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
     
-    //cubeOfCubes(&RC,checkers,litMaterial);
-    
+    cubeOfCubes(&scene,checkers,litMaterial);
 
     // skybox is special and doesn't belong to the SceneGraph
     SkyboxRenderer mySky(background, glm::mat4(1.0f)); // our "skybox"
@@ -295,10 +294,6 @@ int main()
 
     // render loop
     // -----------
-
-    
-    //glViewport(0, 0, scrn_width, scrn_height);
-
 
     double lastTime = glfwGetTime();
 
@@ -329,10 +324,10 @@ int main()
 
         // moving light source, must set it's position...
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
-        RC.light.position = rotate * glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
+        scene.light.position = rotate * glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
         // show a cube from that position
-        lightCube.modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), RC.light.position), glm::vec3(.25f));
+        lightCube->modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), scene.light.position), glm::vec3(.25f));
 
         {
             // first we do the "shadow pass"  really just for creating a depth buffer from the light's perspective
@@ -343,7 +338,7 @@ int main()
             glClear(GL_DEPTH_BUFFER_BIT);
 
             // render from the lights perspective and position to create the shadowMap
-            RC.renderFrom(RC.light, deltaTime);
+            scene.renderFrom(scene.light, deltaTime);
         }
         {
             // do the "normal" drawing
@@ -355,12 +350,12 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glDisable(GL_DEPTH_TEST);
-            mySky.render(glm::mat4(glm::mat3(glm::lookAt(RC.camera.position, RC.camera.target, RC.camera.up))), RC.camera.projection, deltaTime, RC.light.position, RC.camera.position);
+            mySky.render(glm::mat4(glm::mat3(glm::lookAt(scene.camera.position, scene.camera.target, scene.camera.up))), scene.camera.projection, deltaTime, scene.light.position, scene.camera.position);
             
             glEnable(GL_DEPTH_TEST);
 
             // render from the cameras position and perspective  this may or may not be offscreen 
-            RC.renderFrom(RC.camera, deltaTime);
+            scene.renderFrom(scene.camera, deltaTime);
         }
         {
             // assuming the previous was offscreen, we now need to draw a quad with the results to the screen!
@@ -368,10 +363,10 @@ int main()
 
             glDisable(GL_DEPTH_TEST);
 
-            fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, RC.light.position, RC.camera.position);
+            fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, scene.light.position, scene.camera.position);
         }
         // draw imGui over the top
-        drawIMGUI(shaders, &frontQuad,Material::materialList,&cubeParticles,&RC);
+        drawIMGUI(shaders, frontQuad,Material::materialList,cubeParticles,&scene);
 
         glfwSwapBuffers(window);
     }
@@ -389,6 +384,11 @@ int main()
 
      for (Material* m : temp)
          delete m;
+
+     static std::vector<Renderer*> tempR = scene.rendererList;
+
+     for (Renderer* r : tempR)
+         delete r;
     
     return 0;
 }

@@ -194,7 +194,7 @@ void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, gl
     myMaterial->myShader->setInt("skybox", 0);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, myMaterial->texture);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, myMaterial->textures[0]);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);

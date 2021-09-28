@@ -43,7 +43,7 @@ extern unsigned int depthMap;
 
 void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer, 
     std::vector<Material*>materials,ParticleRenderer *particleSystem,
-    RenderContext *RC) {
+    SceneGraph *sg) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -142,27 +142,27 @@ void drawIMGUI(std::vector<Shader*> shaders, Renderer *myRenderer,
             v_angle = fmod(glfwGetTime()/4.0f, glm::pi<float>() *2.0) - glm::pi<float>();
 
         ImGui::DragFloat("Zoom", &(camera.Zoom), .5f,12.0f, 120.0f);
-        RC->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+        sg->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
         
         glm::mat4 vMat = glm::rotate(glm::mat4(1.0f), -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
 
-        RC->camera.position = vMat * glm::vec4(v_transVec[0], v_transVec[1], v_transVec[2], 1.0f);
-        RC->camera.target = glm::vec4(camTarget[0], camTarget[1], camTarget[2], 1.0f);
+        sg->camera.position = vMat * glm::vec4(v_transVec[0], v_transVec[1], v_transVec[2], 1.0f);
+        sg->camera.target = glm::vec4(camTarget[0], camTarget[1], camTarget[2], 1.0f);
 
         for (int i = 0; i < 3; i++)
         {
             ImGui::PushID(i);
 
             if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
-                materials[6]->texture = texture[i];
+                materials[3]->textures[0] = texture[i];
             ImGui::PopID();
             ImGui::SameLine();
         }
 
         ImGui::NewLine();
 
-        ImGui::SliderFloat("shine5", &materials[5]->shine, 0.0, 1.0);
-        ImGui::SliderFloat("shine6", &materials[6]->shine, 0.0, 1.0);
+        ImGui::SliderFloat("shine5", &materials[2]->shine, 0.0, 1.0);
+        ImGui::SliderFloat("shine6", &materials[3]->shine, 0.0, 1.0);
 
         ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
 
