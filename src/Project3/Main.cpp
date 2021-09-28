@@ -55,12 +55,11 @@ int main();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 unsigned int framebuffer;
-unsigned int textureColorbuffer;
-unsigned int textureDepthbuffer;
 
-void setupFrameBuffer() {
+unsigned int setupFrameBuffer() {
     // framebuffer configuration
     // -------------------------
+    unsigned int textureColorbuffer;
 
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -85,12 +84,16 @@ void setupFrameBuffer() {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return textureColorbuffer;
 }
 unsigned int depthMapFBO;
-unsigned int depthMap;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
-void setupDepthMap() {
+unsigned int setupDepthMap() {
+
+    unsigned int depthMap;
+
     // configure depth map FBO
     // -----------------------
     glGenFramebuffers(1, &depthMapFBO);
@@ -108,9 +111,11 @@ void setupDepthMap() {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return depthMap;
 }
 
-void cubeOfCubes(SceneGraph *sg, Material *m1, Material *m2) 
+void cubeOfCubes(SceneGraph *sg) 
 {
     for (int i = -1; i < 2; i++)
         for (int j = -1; j < 2; j++)
@@ -121,11 +126,11 @@ void cubeOfCubes(SceneGraph *sg, Material *m1, Material *m2)
                 xf = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(x * .33, y * .33, k * .33)), glm::vec3(.20)), .8f, glm::vec3(1, 1, 0));
                 Renderer* nC;
                 if ((j == 0) && (k == 0) && (i == 0))
-                    nC = new SphereRenderer(m1, xf);
+                    nC = new SphereRenderer(Material::materials["unicorn"], xf);
                 else if ((j == k) || (i == j))
-                    nC = new nCubeRenderer(m2, xf);
+                    nC = new CubeRenderer(Material::materials["rpi"], xf);
                 else
-                    nC = new nCubeRenderer(m1, xf);
+                    nC = new CubeRenderer(Material::materials["litMaterial"], xf);
                 sg->addRenderer(nC);
             }
 }
@@ -197,19 +202,29 @@ int main()
     scrn_height = viewportDims[3];
 
     setupTextures(texture);
-    setupFrameBuffer();
-    setupDepthMap();
+
+    std::map<std::string, unsigned int> texMap;
+
+    texMap["myTexture"] = texture[0];
+    texMap["rayTrace"] = texture[1];
+    texMap["sky"] = texture[2];
+    texMap["depth"] = setupDepthMap();
+    texMap["offScreen"] = setupFrameBuffer();
+    texMap["shuttle"] = loadTexture("data/spstob_1.jpg");
+    texMap["unicorn"] = loadTexture("data/unicorn.png");
+    texMap["rpi"] = loadTexture("data/rpi.png");
 
     // 
     // set up the perspective projection for the camera and the light
     //
     scene.camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect = ((float)scrn_width / (float)scrn_height), 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
-    scene.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
-    scene.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
-
     scene.camera.position = glm::vec4(0, 0, -5, 1.0f);
     scene.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
+    scene.light.projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
+    scene.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
+
+    
     // create shaders and then materials that use the shaders (multiple materials can use the same shader)
 
     // Note that the Shader and Material classes use static maps of created instances of each
@@ -217,31 +232,33 @@ int main()
     //  be careful when referencing them since the strings MUST match!
     //  the maps are only used during setup and teardown, and not within the main loop, so efficiency isn't an issue
 
-    {
-        // declare and intialize our base shader and white material
+    {   // declare and intialize our base shader and materials
         new Shader("data/vertex.lgsl", "data/fragment.lgsl", "base");
+
         new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
+        new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.80, 0.80, 0.0, 1.0));
     }
-    {
-        // declare and intialize shader with colored vertices
+    
+    {   // declare and intialize shader with colored vertices
         new Shader("data/vertColors.lgsl", "data/fragColors.lgsl", "colored");
+
         new Material(Shader::shaders["colored"], "coloredVerts", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     }
-    {
-        // declare and intialize shader with texture(s)
+    {   // declare and intialize shader with texture(s)
         new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
-        new Material(Shader::shaders["textured"], "shuttle", texture[2], texture[3]);
-        new Material(Shader::shaders["textured"], "checkers", texture[0], texture[3]);
+
+        new Material(Shader::shaders["textured"], "shuttle", texMap["shuttle"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "checkers", texMap["myTexture"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "unicorn", texMap["unicorn"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "rpi", texMap["rpi"], texMap["sky"]);
     }
-    {
-        // declare and intialize shader with ADS lighting
+    {   // declare and intialize shader with ADS lighting
         new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "PhongShadowed");
-        new Material(Shader::shaders["PhongShadowed"], "litMaterial", texture[0], depthMap, true);
+        new Material(Shader::shaders["PhongShadowed"], "litMaterial", texMap["myTexture"], texMap["depth"], true);
     }
-    {
-        // declare and intialize skybox shader and background material
+    {   // declare and intialize skybox shader and background material
         new Shader("data/vSky.lgsl", "data/fSky.lgsl", "SkyBox");
-        new Material(Shader::shaders["SkyBox"], "background", texture[3], glm::vec4(-1.0));
+        new Material(Shader::shaders["SkyBox"], "background", texMap["sky"], glm::vec4(-1.0));
     } 
     {
         new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
@@ -253,23 +270,22 @@ int main()
     }
     {
         new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
-        new Material(Shader::shaders["PostProcessing"], "offScreenMaterial", textureColorbuffer, glm::vec4(1.0, 1.0, 0.0, 1.0));
+        new Material(Shader::shaders["PostProcessing"], "offScreenMaterial", texMap["offScreen"], glm::vec4(1.0, 1.0, 0.0, 1.0));
     }
-    
-    // Setup all of the objects to be rendererd and add them to the 
-    scene.addRenderer(new nCubeRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
+    // Setup all of the objects to be rendered and add them to the scene at the appropriate level
+    scene.addRenderer(new CubeRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
 
-    nCubeRenderer* lightCube = NULL;
-    scene.addRenderer(lightCube = new nCubeRenderer(Material::materials["white"], glm::translate(glm::mat4(1.0f), scene.light.position)));
+    CubeRenderer* lightCube = NULL;
+    scene.addRenderer(lightCube = new CubeRenderer(Material::materials["white"], glm::translate(glm::mat4(1.0f), scene.light.position)));
 
     scene.addRenderer(new SphereRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
-    scene.addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    //scene.addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     scene.addRenderer(new ObjRenderer("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
     
     l1 = scene.addChild(glm::mat4(1));
 
-    ParticleRenderer* cubeParticles = NULL;
-    scene.addRenderer(cubeParticles = new ParticleRenderer (Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
+    iCubeRenderer* cubeSystem = NULL;
+    scene.addRenderer(cubeSystem = new iCubeRenderer(Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
     QuadRenderer* frontQuad = NULL;
     scene.addRenderer(frontQuad = new QuadRenderer(Material::materials["checkers"], glm::mat4(1.0f))); // our "first quad
@@ -283,7 +299,7 @@ int main()
     scene.getParent();
     l3 = scene.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
     
-    cubeOfCubes(&scene, Material::materials["checkers"], Material::materials["litMaterial"]);
+    cubeOfCubes(&scene);
 
     // skybox is special and doesn't belong to the SceneGraph
     SkyboxRenderer mySky(Material::materials["background"], glm::mat4(1.0f)); // our "skybox"
@@ -366,7 +382,7 @@ int main()
             fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, scene.light.position, scene.camera.position);
         }
         // draw imGui over the top
-        drawIMGUI(frontQuad,cubeParticles,&scene);
+        drawIMGUI(frontQuad,cubeSystem,&scene,texMap);
 
         glfwSwapBuffers(window);
     }

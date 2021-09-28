@@ -90,13 +90,13 @@ void setupTexture(unsigned int tNum, const void* buff, int x, int y, unsigned in
 }
 void deleteTextures(unsigned int texture[])
 {
-    glDeleteTextures(4, texture);
+    glDeleteTextures(3, texture);
 }
 void setupTextures(unsigned int texture[])
 {
     // create textures 
     // -------------------------
-    glGenTextures(3, texture);
+    glGenTextures(2, texture);
 
     myTexture();
     setupTexture(texture[0], (const void*)imageBuff, 512, 512, GL_RGBA);
@@ -104,18 +104,6 @@ void setupTextures(unsigned int texture[])
 
     RayTracer();
     setupTexture(texture[1], (const void*)imageBuff, 512, 512, GL_RGBA);
-
-    // load image, create texture and generate mipmaps
-    int width = 0, height = 0, nrChannels = 0;
-
-    stbi_set_flip_vertically_on_load(true);
-
-    unsigned char* data = stbi_load("data/spstob_1.jpg", &width, &height, &nrChannels, 0);
-
-    setupTexture(texture[2], (const void*)data, width, height, nrChannels == 4 ? GL_RGBA : GL_RGB);
-
-    stbi_image_free(data);
-    stbi_set_flip_vertically_on_load(false);
 
     // load textures
 // -------------
@@ -128,5 +116,26 @@ void setupTextures(unsigned int texture[])
         "data/cubemap/zp.jpg",
         "data/cubemap/zn.jpg",
     };
-    texture[3] = loadCubemap(faces);
+    texture[2] = loadCubemap(faces);
+}
+
+unsigned int loadTexture(const char* fPath)
+{
+    unsigned int oneOff;
+    // create textures 
+    // -------------------------
+    glGenTextures(1, &oneOff);
+
+    // load image, create texture and generate mipmaps
+    int width = 0, height = 0, nrChannels = 0;
+
+    stbi_set_flip_vertically_on_load(true);
+
+    unsigned char* data = stbi_load(fPath, &width, &height, &nrChannels, 0);
+
+    setupTexture(oneOff, (const void*)data, width, height, nrChannels == 4 ? GL_RGBA : GL_RGB);
+
+    stbi_image_free(data);
+    stbi_set_flip_vertically_on_load(false);
+    return oneOff;
 }

@@ -69,12 +69,6 @@ public:
 
 };
 
-class nCubeRenderer : public Renderer {
-    // ------------------------------------------------------------------
-public:
-    nCubeRenderer(Material*, glm::mat4 m);
-};
-
 class ObjRenderer : public Renderer {
 public:
     ObjRenderer(const char* filePath, Material*, glm::mat4 m);
@@ -102,7 +96,7 @@ public:
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
 };
 
-class ParticleRenderer : public Renderer {
+class iCubeRenderer : public Renderer {
     
 public:
     int maxParticles = 25000;
@@ -111,7 +105,7 @@ public:
     glm::vec3* iModelColors;
     
 public:
-    ParticleRenderer(Material*, glm::mat4 m);
+    iCubeRenderer(Material*, glm::mat4 m);
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
     
 private:

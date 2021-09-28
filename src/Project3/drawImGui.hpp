@@ -8,6 +8,6 @@
 #ifndef drawImGui_hpp
 #define drawImGui_hpp
 
-void drawIMGUI(Renderer *myRenderer,ParticleRenderer *particleSystem,SceneGraph *sg);
+void drawIMGUI(Renderer *myRenderer, iCubeRenderer* cubeSystem,SceneGraph *sg,std::map<std::string,unsigned int> texMap);
 
 #endif /* drawImGui_hpp */

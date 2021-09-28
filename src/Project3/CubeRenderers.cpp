@@ -16,51 +16,51 @@
 #include "renderer.h"
 #include "ImportedModel.h"
 
-nCubeRenderer::nCubeRenderer(Material* material, glm::mat4 m)
+CubeRenderer::CubeRenderer(Material* material, glm::mat4 m)
 {
-    float vertices[216] = {
-           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-           0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-          -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+    float vertices[288] = {
+           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,1.0f,
+           0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,0.0f,
+          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,0.0f,
+          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,0.0f,
+          -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,1.0f,
+           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,1.0f,
 
-          -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-           0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-          -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-          -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+          -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,1.0f,
+           0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,0.0f,
+           0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,0.0f,
+           0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,0.0f,
+          -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,1.0f,
+          -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,1.0f,
 
-          -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-          -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-          -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-          -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-          -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-          -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+          -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f,1.0f,
+          -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f,0.0f,
+          -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f,0.0f,
+          -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f,0.0f,
+          -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f,1.0f,
+          -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f,1.0f,
 
-           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f,1.0f,
+           0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f,0.0f,
+           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f,0.0f,
+           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f,0.0f,
+           0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f,1.0f,
+           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f,1.0f,
 
-          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-           0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-           0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-           0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-          -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,1.0f,
+           0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,0.0f,
+           0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,0.0f,
+           0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,0.0f,
+          -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,1.0f,
+          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,1.0f,
 
-           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f,1.0f,
+           0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 1.0f,0.0f,
+          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f,0.0f,
 
-          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-          -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f
+          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f,0.0f,
+          -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f,1.0f,
+           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f,1.0f
     };
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -79,14 +79,19 @@ nCubeRenderer::nCubeRenderer(Material* material, glm::mat4 m)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     // position attribute 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
     // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    // uv attribute
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(3);
+
     setupColorAttrib(); // color is in its own VBO
+
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -97,7 +102,6 @@ nCubeRenderer::nCubeRenderer(Material* material, glm::mat4 m)
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
 }
-
 float cubeVertexPositions[108] =
 {
     // back face
@@ -135,7 +139,7 @@ float cubeTexCoords[72] = {
     1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
     1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f
 };
-
+/*
 CubeRenderer::CubeRenderer(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -165,6 +169,7 @@ CubeRenderer::CubeRenderer(Material* material, glm::mat4 m)
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
 };
+*/
 
 SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
 {
@@ -190,7 +195,11 @@ void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, gl
 
     if (!enabled) return;
 
+    if (myMaterial == NULL)
+        myMaterial = Material::materials["green"];
+
     myMaterial->use();
+
     myMaterial->myShader->setInt("skybox", 0);
 
     glActiveTexture(GL_TEXTURE0);
@@ -211,7 +220,7 @@ void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, gl
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void ParticleRenderer::setupIMatrices() {
+void iCubeRenderer::setupIMatrices() {
     unsigned int amount = maxParticles;
     iModelMatrices = new glm::mat4[amount];
     iModelColors = new glm::vec3[amount];
@@ -263,7 +272,7 @@ void ParticleRenderer::setupIMatrices() {
     }
 }
 
-ParticleRenderer::ParticleRenderer(Material* material, glm::mat4 m)
+iCubeRenderer::iCubeRenderer(Material* material, glm::mat4 m)
 {
 
     modelMatrix = m;
@@ -294,18 +303,21 @@ ParticleRenderer::ParticleRenderer(Material* material, glm::mat4 m)
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
     glEnableVertexAttribArray(2);
 
-    setupColorAttrib();
+    //setupColorAttrib();
     setupIMatrices();
 
     glBindVertexArray(0);
 }
 
-void ParticleRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
+void iCubeRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
 
     if (!enabled) return;
+
+    if (myMaterial == NULL)
+        myMaterial = Material::materials["green"];
 
     myMaterial->use();
 

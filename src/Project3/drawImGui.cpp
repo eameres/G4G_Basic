@@ -42,8 +42,8 @@ extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 extern unsigned int depthMap;
 
-void drawIMGUI(Renderer *myRenderer, ParticleRenderer *particleSystem,
-    SceneGraph *sg) {
+void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
+    SceneGraph *sg, std::map<std::string, unsigned int> texMap) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
@@ -73,7 +73,7 @@ void drawIMGUI(Renderer *myRenderer, ParticleRenderer *particleSystem,
 
         ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
-        Shader* gShader = Shader::shaders["PhongShadowed"];
+        Shader* gShader = Shader::shaders["base"];
 
         if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
         {
@@ -163,13 +163,13 @@ void drawIMGUI(Renderer *myRenderer, ParticleRenderer *particleSystem,
         ImGui::SliderFloat("shine5", &Material::materials["checkers"]->shine, 0.0, 1.0);
         ImGui::SliderFloat("shine6", &Material::materials["shuttle"]->shine, 0.0, 1.0);
 
-        ImGui::DragInt("particles", &(particleSystem->instances), 1, 0, particleSystem->maxParticles);
+        ImGui::DragInt("particles", &(cubeSystem->instances), 1, 0, cubeSystem->maxParticles);
 
         //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
         
-        ImGui::Image((void*)(intptr_t)depthMap, ImVec2(128, 128));
+        ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(128, 128));
 
-        ImGui::Image((void*)(intptr_t)textureColorbuffer, ImVec2(128, 128));
+        ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
 
         ImGui::End();
 

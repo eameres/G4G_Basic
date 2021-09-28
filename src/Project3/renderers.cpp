@@ -28,7 +28,10 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
 
     if (!enabled) return;
 
-    assert(myMaterial != NULL);
+    //assert(myMaterial != NULL);
+
+    if (myMaterial == NULL)
+        myMaterial = Material::materials["green"];
 
     myMaterial->use();
 
@@ -76,6 +79,9 @@ void Renderer::setupColorAttrib() {
     // color attribute
 
     float color[3];
+
+    if (myMaterial == NULL)
+        myMaterial = Material::materials["green"];
 
     color[0] = glm::value_ptr(myMaterial->color)[0];
     color[1] = glm::value_ptr(myMaterial->color)[1];
