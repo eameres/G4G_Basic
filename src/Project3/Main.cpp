@@ -31,12 +31,9 @@
 #include "renderer.h"
 #include "textures.h"
 #include "SceneGraph.h"
+#include "FrameBufferObjects.h"
 
 #include "drawImGui.hpp"
-
-//glm::mat4 pMat; // perspective matrix
-//glm::mat4 vMat; // view matrix
-//glm::vec3 cPos;
 
 glm::mat4 *gCameraProjection; // perspective matrix
 
@@ -53,67 +50,6 @@ unsigned int texture[] = { 0,1,2,3 };
 int main();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-
-unsigned int framebuffer;
-
-unsigned int setupFrameBuffer() {
-    // framebuffer configuration
-    // -------------------------
-    unsigned int textureColorbuffer;
-
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-
-    // create a color attachment texture
-    glGenTextures(1, &textureColorbuffer);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scrn_width, scrn_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
-    
-    // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-    unsigned int rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, scrn_width, scrn_height); // use a single renderbuffer object for both a depth AND stencil buffer.
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
-    
-    // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return textureColorbuffer;
-}
-unsigned int depthMapFBO;
-const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-
-unsigned int setupDepthMap() {
-
-    unsigned int depthMap;
-
-    // configure depth map FBO
-    // -----------------------
-    glGenFramebuffers(1, &depthMapFBO);
-    // create depth texture
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return depthMap;
-}
 
 void cubeOfCubes(SceneGraph *sg) 
 {
@@ -134,10 +70,73 @@ void cubeOfCubes(SceneGraph *sg)
                 sg->addRenderer(nC);
             }
 }
+
+void setupShadersAndMaterials(std::map<std::string, unsigned int> texMap)
+{
+    {   // declare and intialize shader with colored vertices
+        new Shader("data/vertColors.lgsl", "data/fragColors.lgsl", "colored");
+
+        new Material(Shader::shaders["colored"], "coloredVerts", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
+    }
+    {   // declare and intialize shader with texture(s)
+        new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
+
+        new Material(Shader::shaders["textured"], "shuttle", texMap["shuttle"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "checkers", texMap["myTexture"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "unicorn", texMap["unicorn"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "rpi", texMap["rpi"], texMap["sky"]);
+        new Material(Shader::shaders["textured"], "brick", texMap["brick"], texMap["sky"]);
+    }
+    {
+        new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
+        new Material(Shader::shaders["Particle"], "pMaterial", -1, glm::vec4(1.0, 0.0, 0.0, 1.0));
+    }
+}
+
+iCubeRenderer* cubeSystem = NULL;
+QuadRenderer* frontQuad = NULL;
+
+void setupScene(SceneGraph *scene,treeNode **nodes)
+{
+    glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>()/2.0f, glm::vec3(-1, 0, 0));
+    scene->addRenderer(frontQuad = new QuadRenderer(Material::materials["brick"], floorXF)); // our "first quad
+
+    //scene.addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    scene->addRenderer(new ObjRenderer("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
+
+    nodes[0] = scene->addChild(glm::mat4(1));
+
+    scene->addRenderer(cubeSystem = new iCubeRenderer(Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
+
+    scene->addRenderer(frontQuad = new QuadRenderer(Material::materials["checkers"], glm::mat4(1.0f))); // our "first quad
+
+    scene->addRenderer(new QuadRenderer(Material::materials["coloredVerts"], glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0)))); // our "second quad"
+
+    nodes[1] = scene->addChild(glm::mat4(1));
+
+    scene->addRenderer(new TorusRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+
+    scene->getParent();
+    nodes[2] = scene->addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+
+    cubeOfCubes(scene);
+
+}
+
+void animateNodes(treeNode** nodes)
+{
+    // animating the three levels of our hierarchy
+    if (nodes[0] != NULL)nodes[0]->setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
+    if (nodes[1] != NULL)nodes[1]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
+    if (nodes[2] != NULL)nodes[2]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
+
+}
 int main()
 {
+    const unsigned int SHADOW_WIDTH = 1024;
+    const unsigned int SHADOW_HEIGHT = 1024;
+
     SceneGraph scene;
-    treeNode* base, * l1 = NULL, * l2 = NULL, * l3 = NULL;
 
     gCameraProjection = &scene.camera.projection;  // hack for the viewport callback function to set the projection matrix
 
@@ -176,9 +175,6 @@ int main()
     }
     glfwMakeContextCurrent(window);
 
-    // needed if we are drawing directly to the window (for now)
-    //glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-
     // glad: load all OpenGL function pointers
     // ---------------------------------------
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -203,16 +199,20 @@ int main()
 
     setupTextures(texture);
 
+    unsigned int depthMapFBO;
+    unsigned int offscreenFBO;
+
     std::map<std::string, unsigned int> texMap;
 
     texMap["myTexture"] = texture[0];
     texMap["rayTrace"] = texture[1];
     texMap["sky"] = texture[2];
-    texMap["depth"] = setupDepthMap();
-    texMap["offScreen"] = setupFrameBuffer();
+    texMap["depth"] = setupDepthMap(&depthMapFBO,SHADOW_WIDTH,SHADOW_HEIGHT);
+    texMap["offScreen"] = setupFrameBuffer(&offscreenFBO,scrn_width,scrn_height);
     texMap["shuttle"] = loadTexture("data/spstob_1.jpg");
     texMap["unicorn"] = loadTexture("data/unicorn.png");
     texMap["rpi"] = loadTexture("data/rpi.png");
+    texMap["brick"] = loadTexture("data/brick1.jpg");
 
     // 
     // set up the perspective projection for the camera and the light
@@ -238,31 +238,9 @@ int main()
         new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
         new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.80, 0.80, 0.0, 1.0));
     }
-    
-    {   // declare and intialize shader with colored vertices
-        new Shader("data/vertColors.lgsl", "data/fragColors.lgsl", "colored");
-
-        new Material(Shader::shaders["colored"], "coloredVerts", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
-    }
-    {   // declare and intialize shader with texture(s)
-        new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
-
-        new Material(Shader::shaders["textured"], "shuttle", texMap["shuttle"], texMap["sky"]);
-        new Material(Shader::shaders["textured"], "checkers", texMap["myTexture"], texMap["sky"]);
-        new Material(Shader::shaders["textured"], "unicorn", texMap["unicorn"], texMap["sky"]);
-        new Material(Shader::shaders["textured"], "rpi", texMap["rpi"], texMap["sky"]);
-    }
-    {   // declare and intialize shader with ADS lighting
-        new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "PhongShadowed");
-        new Material(Shader::shaders["PhongShadowed"], "litMaterial", texMap["myTexture"], texMap["depth"], true);
-    }
     {   // declare and intialize skybox shader and background material
         new Shader("data/vSky.lgsl", "data/fSky.lgsl", "SkyBox");
         new Material(Shader::shaders["SkyBox"], "background", texMap["sky"], glm::vec4(-1.0));
-    } 
-    {
-        new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
-        new Material(Shader::shaders["Particle"], "pMaterial", -1, glm::vec4(1.0, 0.0, 0.0, 1.0));
     }
     {
         new Shader("data/vDepth.lgsl", "data/fDepth.lgsl", "Depth");
@@ -271,43 +249,36 @@ int main()
     {
         new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
         new Material(Shader::shaders["PostProcessing"], "offScreenMaterial", texMap["offScreen"], glm::vec4(1.0, 1.0, 0.0, 1.0));
+    } 
+    {   // declare and intialize shader with ADS lighting
+        new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "PhongShadowed");
+        new Material(Shader::shaders["PhongShadowed"], "litMaterial", texMap["myTexture"], texMap["depth"], true);
     }
-    // Setup all of the objects to be rendered and add them to the scene at the appropriate level
-    scene.addRenderer(new CubeRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
 
-    CubeRenderer* lightCube = NULL;
-    scene.addRenderer(lightCube = new CubeRenderer(Material::materials["white"], glm::translate(glm::mat4(1.0f), scene.light.position)));
-
-    scene.addRenderer(new SphereRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
-    //scene.addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
-    scene.addRenderer(new ObjRenderer("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
-    
-    l1 = scene.addChild(glm::mat4(1));
-
-    iCubeRenderer* cubeSystem = NULL;
-    scene.addRenderer(cubeSystem = new iCubeRenderer(Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
-
-    QuadRenderer* frontQuad = NULL;
-    scene.addRenderer(frontQuad = new QuadRenderer(Material::materials["checkers"], glm::mat4(1.0f))); // our "first quad
-
-    scene.addRenderer(new QuadRenderer (Material::materials["coloredVerts"], glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0)))); // our "second quad"
-
-    l2 = scene.addChild(glm::mat4(1));
-
-    scene.addRenderer(new TorusRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
-
-    scene.getParent();
-    l3 = scene.addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
-    
-    cubeOfCubes(&scene);
+    setupShadersAndMaterials(texMap);
 
     // skybox is special and doesn't belong to the SceneGraph
     SkyboxRenderer mySky(Material::materials["background"], glm::mat4(1.0f)); // our "skybox"
 
-    // full screen quad needs to be scaled by 2 since the quad is designed around [ -0.5, +0.5 ]
+    // quad renderer for full screen also not in scene : quad needs to be scaled by 2 since the quad is designed around [ -0.5, +0.5 ]
     QuadRenderer fQuad(Material::materials["offScreenMaterial"], glm::scale(glm::mat4(1.0f), glm::vec3(2.0f, 2.0f, 2.0f))); // our fullScreen Quad
-    //fQuad.enabled = false;
 
+    //
+    // OK, now to the scene stuff...
+    // 
+    // Setup all of the objects to be rendered and add them to the scene at the appropriate level
+    scene.addRenderer(new CubeRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
+    scene.addRenderer(new SphereRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
+
+    CubeRenderer* lightCube = NULL;
+    scene.addRenderer(lightCube = new CubeRenderer(Material::materials["white"], glm::translate(glm::mat4(1.0f), scene.light.position)));
+    
+    //{
+        // crazy scene stuff
+         treeNode* nodes[3];
+         setupScene(&scene, nodes);
+    //}
+    
     // render loop
     // -----------
 
@@ -317,6 +288,10 @@ int main()
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // needed if we are drawing directly to the window
+    if (offscreenFBO == 0)
+        glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     
     while (!glfwWindowShouldClose(window))
     {
@@ -333,10 +308,8 @@ int main()
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
 
-        // animating the three levels of our hierarchy
-        if (l1 != NULL) l1->setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
-        if (l2 != NULL)l2->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
-        if (l3 != NULL)l3->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
+        //animate crazy scene stuff
+        animateNodes(nodes);
 
         // moving light source, must set it's position...
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
@@ -360,8 +333,7 @@ int main()
             // do the "normal" drawing
             glViewport(0, 0, scrn_width, scrn_height);
 
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); // offscreen
-            //glBindFramebuffer(GL_FRAMEBUFFER, 0);         // onscreen
+            glBindFramebuffer(GL_FRAMEBUFFER, offscreenFBO); // offscreen
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -373,7 +345,7 @@ int main()
             // render from the cameras position and perspective  this may or may not be offscreen 
             scene.renderFrom(scene.camera, deltaTime);
         }
-        {
+        if (offscreenFBO != 0){
             // assuming the previous was offscreen, we now need to draw a quad with the results to the screen!
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

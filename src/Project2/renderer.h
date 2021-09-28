@@ -53,7 +53,6 @@ public: void scale(const float scale[])
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(glGetUniformLocation(myShader->ID, "albedo"), 0);
 
-
         glBindVertexArray(VAO);
 
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);

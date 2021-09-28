@@ -23,6 +23,8 @@
 #include "camera.h"
 #include "renderer.h"
 
+#include "textures.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
@@ -139,3 +141,5 @@ unsigned int loadTexture(const char* fPath)
     stbi_set_flip_vertically_on_load(false);
     return oneOff;
 }
+
+std::map<std::string, unsigned int> Texture::texMap;

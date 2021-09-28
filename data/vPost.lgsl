@@ -9,16 +9,12 @@ uniform mat4 m; // model
 uniform mat4 v; // view
 uniform mat4 p; // perspective
 uniform float myTime;
-uniform vec3 cPos;
 
 out vec2 TexCoord;
-out vec3 r;
 
 void main()
 {
-	vec3 aPos1 = aPos;// + (aNorm*sin(myTime)/5.0);
-
 	TexCoord = uv.xy;
-	gl_Position = p*v*m*vec4(aPos1, 1.0);
+	gl_Position = p*v*m*vec4(aPos, 1.0);
     
 }
