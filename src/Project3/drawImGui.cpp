@@ -43,7 +43,7 @@ extern unsigned int textureColorbuffer;
 extern unsigned int depthMap;
 
 void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
-    SceneGraph *sg, std::map<std::string, unsigned int> texMap) {
+    SceneGraph *sg, std::map<std::string, unsigned int> texMap,treeNode * nodes[]) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
             // used to get values from imGui to the model matrix
@@ -59,6 +59,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
 
             static float v_transVec[] = { 0.0f,0.0f,3.0f };
             static float camTarget[] = { 0.0f,0.0f,0.0f };
+            static float camClip[] = { 1.0f,1000.0f };
 
             static bool autoPan = false;
             static float baseTime;
@@ -83,49 +84,11 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
             else
                 sg->time = baseTime = glfwGetTime();
 
-            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
-
-            Shader* gShader = Shader::shaders["base"];
-
-            if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
-            {
-                for (const auto& [key, s] : Shader::shaders) {
-                    if (ImGui::BeginTabItem(s->name))
-                    {
-                        gShader = s;
-                        ImGui::EndTabItem();
-                    }
-                }
-                bool showShaders = true;
-
-                if (ImGui::BeginTabItem("close")) {
-                    showShaders = false;
-                    ImGui::EndTabItem();
-                }
-
-                ImGui::EndTabBar();
-
-                if (showShaders) {
-                    static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
-                    ImGui::Text("Vertex Shader");
-                    ImGui::SameLine();
-                    ImGui::Text("%s", std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
-                    ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-
-                    ImGui::Text("Fragment Shader");
-                    ImGui::SameLine();
-                    ImGui::Text("%s", std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
-                    ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
-
-                    if (ImGui::Button("reCompile Shaders"))
-                        gShader->reload();
-
-                    ImGui::SameLine();
-
-                    if (ImGui::Button("Save Shaders"))
-                        gShader->saveShaders();
-                }
-            }
+            ImGui::Checkbox("Node 0", &nodes[0]->enabled);
+            ImGui::SameLine(); ImGui::Checkbox("Node1", &nodes[1]->enabled);
+            ImGui::SameLine(); ImGui::Checkbox("Node2", &nodes[2]->enabled);
+            ImGui::SameLine(); ImGui::Checkbox("Node3", &nodes[3]->enabled);
+            ImGui::SameLine(); ImGui::Checkbox("Node4", &nodes[4]->enabled);
 
             ImGui::Text("Model Matrix");
             // values we'll use to derive a model matrix
@@ -154,46 +117,111 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
                 v_angle = fmod(sg->time / 4.0f, glm::pi<float>() * 2.0) - glm::pi<float>();
 
             ImGui::DragFloat("Zoom", &(camera.Zoom), .5f, 12.0f, 120.0f);
-            sg->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
+            ImGui::SliderFloat("Aspect", &camera.Aspect, -3.0f, 3.0f);
+            ImGui::DragFloat2("Clip Near - Far", camClip, .01f, -100.0f, 100.0f);
+
+            sg->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, camClip[0], camClip[1]);    //  1.0472 radians = 60 degrees
+
+            static float point[3] = { 0,0,0 };
+
+            ImGui::DragFloat3("point", point, .1f, -10.0f, 10.0f);
+            glm::vec4 glmPoint = glm::vec4(point[0], point[1], point[2], 0.0);
+
+            glmPoint = sg->camera.projection * glmPoint;
+
+            ImGui::Text("Transformed %.3f, %.3f, %.3f %.3f", glmPoint.x, glmPoint.y, glmPoint.z, glmPoint.w);
 
             glm::mat4 vMat = glm::rotate(glm::mat4(1.0f), -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
 
             sg->camera.position = vMat * glm::vec4(v_transVec[0], v_transVec[1], v_transVec[2], 1.0f);
             sg->camera.target = glm::vec4(camTarget[0], camTarget[1], camTarget[2], 1.0f);
 
-        if (Material::materials["checkers"] != NULL) {
-            for (int i = 0; i < 2; i++)
-            {
-                ImGui::PushID(i);
+            ImGui::NewLine();
 
-                if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
-                    Material::materials["checkers"]->textures[0] = texture[i];
-                ImGui::PopID();
-                ImGui::SameLine();
-            }
-        }
+            if (cubeSystem != NULL)
+                ImGui::DragInt("particles", &(cubeSystem->instances), 1, 0, cubeSystem->maxParticles);
 
-        ImGui::NewLine();
-
-        if (Material::materials["checkers"] != NULL)
-            ImGui::SliderFloat("shine5", &Material::materials["checkers"]->shine, 0.0, 1.0);
-
-        if (Material::materials["shuttle"] != NULL)
-            ImGui::SliderFloat("shine6", &Material::materials["shuttle"]->shine, 0.0, 1.0);
-
-        if (cubeSystem != NULL)
-            ImGui::DragInt("particles", &(cubeSystem->instances), 1, 0, cubeSystem->maxParticles);
-
-        //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
+            //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
         
-        ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(128, 128));
+            ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(128, 128));
 
-        ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
+            ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
 
-        ImGui::End();
+            ImGui::End();
 
-        // IMGUI Rendering
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    }
+            ShaderEditor(sg, texMap);
+            // IMGUI Rendering
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
 }
+
+void ShaderEditor(SceneGraph* sg, std::map<std::string, unsigned int> texMap) {
+    // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+        {
+            ImGui::Begin("Shader Editor");  // Create a window and append into it.
+
+            
+            ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+
+            Shader* gShader = Shader::shaders["base"];
+
+            if (ImGui::BeginTabBar("Shaders", tab_bar_flags))
+            {
+                for (const auto& [key, s] : Shader::shaders) {
+                    if (ImGui::BeginTabItem(s->name))
+                    {
+                        gShader = s;
+                        ImGui::EndTabItem();
+                    }
+                }
+
+                ImGui::EndTabBar();
+
+                {
+                    static ImGuiInputTextFlags flags = ImGuiInputTextFlags_AllowTabInput;
+                    ImGui::Text("Vertex Shader");
+                    ImGui::SameLine();
+                    ImGui::Text("%s", std::filesystem::absolute(gShader->vertexPath).u8string().c_str());
+                    ImGui::InputTextMultiline("Vertex Shader", gShader->vtext, IM_ARRAYSIZE(gShader->vtext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+
+                    ImGui::Text("Fragment Shader");
+                    ImGui::SameLine();
+                    ImGui::Text("%s", std::filesystem::absolute(gShader->fragmentPath).u8string().c_str());
+                    ImGui::InputTextMultiline("Fragment Shader", gShader->ftext, IM_ARRAYSIZE(gShader->ftext), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+
+                    if (ImGui::Button("reCompile Shaders"))
+                        gShader->reload();
+
+                    ImGui::SameLine();
+
+                    if (ImGui::Button("Save Shaders"))
+                        gShader->saveShaders();
+                }
+            }
+
+            if (Material::materials["checkers"] != NULL) {
+                for (int i = 0; i < 2; i++)
+                {
+                    ImGui::PushID(i);
+
+                    if (ImGui::ImageButton((void*)(intptr_t)texture[i], ImVec2(64, 64)))
+                        Material::materials["checkers"]->textures[0] = texture[i];
+                    ImGui::PopID();
+                    ImGui::SameLine();
+                }
+            }
+
+            ImGui::NewLine();
+
+            if (Material::materials["checkers"] != NULL)
+                ImGui::SliderFloat("shine5", &Material::materials["checkers"]->shine, 0.0, 1.0);
+
+            if (Material::materials["shuttle"] != NULL)
+                ImGui::SliderFloat("shine6", &Material::materials["shuttle"]->shine, 0.0, 1.0);
+
+            ImGui::End();
+
+        }
+}
+

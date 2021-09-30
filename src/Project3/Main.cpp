@@ -98,13 +98,19 @@ QuadRenderer* frontQuad = NULL;
 
 void setupScene(SceneGraph *scene,treeNode **nodes)
 {
+    nodes[0] = scene->getCurrentNode();
+    nodes[0]->enabled = true;
+
+    nodes[1] = scene->addChild(glm::mat4(1));
+    nodes[1]->enabled = false;
+
     glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>()/2.0f, glm::vec3(-1, 0, 0));
     scene->addRenderer(frontQuad = new QuadRenderer(Material::materials["brick"], floorXF)); // our floor quad
 
     scene->addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     scene->addRenderer(new ObjRenderer("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
 
-    nodes[0] = scene->addChild(glm::mat4(1));
+    nodes[2] = scene->addChild(glm::mat4(1));
 
     scene->addRenderer(cubeSystem = new iCubeRenderer(Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
@@ -112,12 +118,12 @@ void setupScene(SceneGraph *scene,treeNode **nodes)
 
     scene->addRenderer(new QuadRenderer(Material::materials["coloredVerts"], glm::rotate(glm::mat4(1.0f), glm::pi<float>(), glm::vec3(1.0, 0.0, 0.0)))); // our "second quad"
 
-    nodes[1] = scene->addChild(glm::mat4(1));
+    nodes[3] = scene->addChild(glm::mat4(1));
 
     scene->addRenderer(new TorusRenderer(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
     scene->getParent();
-    nodes[2] = scene->addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
+    nodes[4] = scene->addChild(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)));
 
     cubeOfCubes(scene);
 
@@ -126,9 +132,9 @@ void setupScene(SceneGraph *scene,treeNode **nodes)
 void animateNodes(treeNode** nodes, double time)
 {
     // animating the three levels of our hierarchy
-    if (nodes[0] != NULL)nodes[0]->setXform(glm::rotate(glm::mat4(1.0f), (float)time, glm::vec3(1, 0, 0.0f)));
-    if (nodes[1] != NULL)nodes[1]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)time * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
-    if (nodes[2] != NULL)nodes[2]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)time * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
+    if (nodes[2] != NULL)nodes[2]->setXform(glm::rotate(glm::mat4(1.0f), (float)time, glm::vec3(1, 0, 0.0f)));
+    if (nodes[3] != NULL)nodes[3]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)time * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
+    if (nodes[4] != NULL)nodes[4]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)time * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
 
 }
 int main()
@@ -275,7 +281,7 @@ int main()
     
     //{
         // crazy scene stuff
-         treeNode* nodes[3];
+         treeNode* nodes[5];
          setupScene(&scene, nodes);
     //}
     
@@ -292,7 +298,7 @@ int main()
     // needed if we are drawing directly to the window
     if (offscreenFBO == 0)
         glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    
+
     while (!glfwWindowShouldClose(window))
     {
         // just like in a game engine, it's useful to know the delta time
@@ -354,7 +360,8 @@ int main()
             fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, &scene);
         }
         // draw imGui over the top
-        drawIMGUI(frontQuad,cubeSystem,&scene,texMap);
+        drawIMGUI(frontQuad,cubeSystem,&scene,texMap,nodes);
+        //scene.time = glfwGetTime();
 
         glfwSwapBuffers(window);
     }

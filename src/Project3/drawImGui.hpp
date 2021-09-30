@@ -8,6 +8,8 @@
 #ifndef drawImGui_hpp
 #define drawImGui_hpp
 
-void drawIMGUI(Renderer *myRenderer, iCubeRenderer* cubeSystem,SceneGraph *sg,std::map<std::string,unsigned int> texMap);
+void drawIMGUI(Renderer *myRenderer, iCubeRenderer* cubeSystem,SceneGraph *sg,std::map<std::string,unsigned int> texMap,treeNode *[]);
+void ShaderEditor(SceneGraph* sg, std::map<std::string, unsigned int> texMap);
+
 
 #endif /* drawImGui_hpp */

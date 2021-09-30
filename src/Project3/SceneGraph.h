@@ -35,11 +35,14 @@ private:
     std::vector<Renderer*> group;
     glm::mat4 xform;
     treeNode* parent;
+public:
+    bool enabled;
 
 public:
     treeNode(glm::mat4 xf, treeNode* p) {
         xform = xf;
         parent = p;
+        enabled = true;
     }
     void setXform(glm::mat4 xf) { xform = xf; }
 
@@ -62,9 +65,17 @@ struct SceneGraph {
     double time;
 
 public:
+
     void addRenderer(Renderer* r) { 
         currNode->addRenderer(r); 
         rendererList.push_back(r);
+    }
+    treeNode* getCurrentNode() {
+        return currNode;
+    }    
+
+    treeNode* getRoot() {
+        return tree;
     }
 
     treeNode* addChild(glm::mat4 xf) {
