@@ -139,37 +139,6 @@ float cubeTexCoords[72] = {
     1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
     1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f
 };
-/*
-CubeRenderer::CubeRenderer(Material* material, glm::mat4 m)
-{
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    modelMatrix = m;
-
-    myMaterial = material;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(numVBOs = 1, VBO);
-    // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
-
-    // vertex buffer object, simple version, just coordinates
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions), cubeVertexPositions, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-    indexCount = -36; // since we have no indices, we tell the render call to use raw triangles by setting indexCount to -numVertices
-
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
-};
-*/
 
 SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
 {
@@ -188,10 +157,13 @@ SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
     glEnableVertexAttribArray(0);
 }
 
-void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
+void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
+
+    glm::vec3 lightLoc = sg->light.position;
+    glm::vec3 cameraLoc = sg->camera.position;
 
     if (!enabled) return;
 
@@ -309,10 +281,13 @@ iCubeRenderer::iCubeRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-void iCubeRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
+void iCubeRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
+
+    glm::vec3 lightLoc = sg->light.position;
+    glm::vec3 cameraLoc = sg->camera.position;
 
     if (!enabled) return;
 
@@ -331,6 +306,10 @@ void iCubeRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+    glm::mat4 lightProjection = sg->light.projection * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
+
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightProjection));
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

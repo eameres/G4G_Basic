@@ -15,13 +15,14 @@
 
 #include "renderer.h"
 #include "ImportedModel.h"
+#include "SceneGraph.h"
 
 std::map<std::string, Material*> Material::materials;
 std::map<std::string, Shader*> Shader::shaders;
 
 std::vector<Renderer*> Renderer::renderList;
 
-void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc)
+void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -33,6 +34,9 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
     if (myMaterial == NULL)
         myMaterial = Material::materials["green"];
 
+    glm::vec3 lightLoc = sg->light.position;
+    glm::vec3 cameraLoc = sg->camera.position;
+
     myMaterial->use();
 
     //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
@@ -43,6 +47,7 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+
     glUniform1f(glGetUniformLocation(myMaterial->myShader->ID, "myTime"), elapsedTime += (float)deltaTime);
     glUniform1f(glGetUniformLocation(myMaterial->myShader->ID, "shine"), myMaterial->shine);
 
@@ -51,14 +56,9 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cameraLoc));
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
-    float near_plane =0.5f, far_plane = 7.50f;
-    glm::mat4 lightProjection = glm::ortho(-2.0f,2.0f, -2.0f, 2.0f, near_plane, far_plane);
+    glm::mat4 lightProjection = sg->light.projection * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
     
-    glm::mat4 lightView = glm::lookAt(lightLoc,
-                                      glm::vec3( 0.0f, 0.0f,  0.0f),
-                                      glm::vec3( 0.0f, 1.0f,  0.0f));
-    
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightProjection * lightView));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightProjection));
     
     glBindVertexArray(VAO);
 

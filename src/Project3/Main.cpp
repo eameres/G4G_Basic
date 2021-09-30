@@ -99,9 +99,9 @@ QuadRenderer* frontQuad = NULL;
 void setupScene(SceneGraph *scene,treeNode **nodes)
 {
     glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>()/2.0f, glm::vec3(-1, 0, 0));
-    scene->addRenderer(frontQuad = new QuadRenderer(Material::materials["brick"], floorXF)); // our "first quad
+    scene->addRenderer(frontQuad = new QuadRenderer(Material::materials["brick"], floorXF)); // our floor quad
 
-    //scene.addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    scene->addRenderer(new ObjRenderer("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     scene->addRenderer(new ObjRenderer("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
 
     nodes[0] = scene->addChild(glm::mat4(1));
@@ -123,12 +123,12 @@ void setupScene(SceneGraph *scene,treeNode **nodes)
 
 }
 
-void animateNodes(treeNode** nodes)
+void animateNodes(treeNode** nodes, double time)
 {
     // animating the three levels of our hierarchy
-    if (nodes[0] != NULL)nodes[0]->setXform(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f)));
-    if (nodes[1] != NULL)nodes[1]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
-    if (nodes[2] != NULL)nodes[2]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)glfwGetTime() * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
+    if (nodes[0] != NULL)nodes[0]->setXform(glm::rotate(glm::mat4(1.0f), (float)time, glm::vec3(1, 0, 0.0f)));
+    if (nodes[1] != NULL)nodes[1]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)time * 2.0f, glm::vec3(0, 1, 0.0f)), glm::vec3(0, 1, 0)));
+    if (nodes[2] != NULL)nodes[2]->setXform(glm::translate(glm::rotate(glm::mat4(1.0f), (float)time * -2.0f, glm::vec3(0, 0, 1.0f)), glm::vec3(0.0f, 0.0f, -1.0f)));
 
 }
 int main()
@@ -309,10 +309,10 @@ int main()
             glfwSetWindowShouldClose(window, true);
 
         //animate crazy scene stuff
-        animateNodes(nodes);
+        animateNodes(nodes,scene.time);
 
         // moving light source, must set it's position...
-        glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(1, 0, 0.0f));
+        glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)scene.time, glm::vec3(1, 0, 0.0f));
         scene.light.position = rotate * glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
         // show a cube from that position
@@ -338,7 +338,7 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             glDisable(GL_DEPTH_TEST);
-            mySky.render(glm::mat4(glm::mat3(glm::lookAt(scene.camera.position, scene.camera.target, scene.camera.up))), scene.camera.projection, deltaTime, scene.light.position, scene.camera.position);
+            mySky.render(glm::mat4(glm::mat3(glm::lookAt(scene.camera.position, scene.camera.target, scene.camera.up))), scene.camera.projection, deltaTime, &scene);
             
             glEnable(GL_DEPTH_TEST);
 
@@ -351,7 +351,7 @@ int main()
 
             glDisable(GL_DEPTH_TEST);
 
-            fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, scene.light.position, scene.camera.position);
+            fQuad.render(glm::mat4(1.0f), glm::mat4(1.0f), deltaTime, &scene);
         }
         // draw imGui over the top
         drawIMGUI(frontQuad,cubeSystem,&scene,texMap);

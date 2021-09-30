@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Material.h"
+#include "SceneGraph.h"
 
-struct RenderContext;
+struct SceneGraph;
 
 class Renderer {
 public:
@@ -65,7 +66,7 @@ public: void scale(const float scale[])
     modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
 }
 public: 
-    virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
+    virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
 
 };
 
@@ -93,7 +94,7 @@ class SkyboxRenderer : public Renderer {
     
 public:
     SkyboxRenderer(Material*, glm::mat4 m);
-    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
 };
 
 class iCubeRenderer : public Renderer {
@@ -106,7 +107,7 @@ public:
     
 public:
     iCubeRenderer(Material*, glm::mat4 m);
-    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, glm::vec3 lightLoc, glm::vec3 cameraLoc);
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
     
 private:
     void setupIMatrices(void);

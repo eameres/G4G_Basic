@@ -6,7 +6,7 @@ void treeNode::traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, 
 
     for (Renderer* r : group)
     {
-        r->render(vMat, projection, deltaTime, sg->light.position, sg->camera.position);
+        r->render(vMat, projection, deltaTime, sg);
     }
     if (children.size() > 0) {
         for (treeNode* n : children) {

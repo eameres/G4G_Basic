@@ -26,6 +26,7 @@ struct emitterCollector { // a light or camera common attributes
 };
 
 struct SceneGraph;
+class Renderer;
 
 struct treeNode {
 
@@ -58,6 +59,7 @@ struct SceneGraph {
 
     treeNode* tree;
     treeNode* currNode;
+    double time;
 
 public:
     void addRenderer(Renderer* r) { 

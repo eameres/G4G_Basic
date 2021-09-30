@@ -61,6 +61,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
             static float camTarget[] = { 0.0f,0.0f,0.0f };
 
             static bool autoPan = false;
+            static float baseTime;
 
             // Start the Dear ImGui frame
             ImGui_ImplOpenGL3_NewFrame();
@@ -70,6 +71,17 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
             ImGui::Begin("Graphics For Games V3");  // Create a window and append into it.
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            static float tFloat = 0.0;
+            ImGui::SliderFloat("timeOffset", &tFloat, -5.0f, 5.0f);
+            static bool freeze = false;
+
+            ImGui::Checkbox("glfwGetTime", &freeze);
+
+            if (freeze)
+                sg->time = baseTime + tFloat;
+            else
+                sg->time = baseTime = glfwGetTime();
 
             ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 
@@ -139,7 +151,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
             if (!autoPan)
                 ImGui::SliderAngle("vAngle", &v_angle, -180.0f, 180.0f);
             else
-                v_angle = fmod(glfwGetTime() / 4.0f, glm::pi<float>() * 2.0) - glm::pi<float>();
+                v_angle = fmod(sg->time / 4.0f, glm::pi<float>() * 2.0) - glm::pi<float>();
 
             ImGui::DragFloat("Zoom", &(camera.Zoom), .5f, 12.0f, 120.0f);
             sg->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, 0.01f, 1000.0f);    //  1.0472 radians = 60 degrees
