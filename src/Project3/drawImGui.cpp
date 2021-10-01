@@ -27,7 +27,6 @@
 #include "shader_s.h"
 #include "ImportedModel.h"
 
-#include "camera.h"
 #include "renderer.h"
 #include "SceneGraph.h"
 
@@ -36,13 +35,12 @@
 extern glm::mat4 pMat; // perspective matrix
 extern glm::mat4 vMat; // view matrix
 
-extern Camera camera;
 
 extern unsigned int texture[];
 extern unsigned int textureColorbuffer;
 extern unsigned int depthMap;
 
-void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
+void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
     SceneGraph *sg, std::map<std::string, unsigned int> texMap,treeNode * nodes[]) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
@@ -59,7 +57,8 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
 
             static float v_transVec[] = { 0.0f,0.0f,3.0f };
             static float camTarget[] = { 0.0f,0.0f,0.0f };
-            static float camClip[] = { 1.0f,1000.0f };
+            float camClip[] = { 1.0f,1000.0f };
+            float camFOV, camAspect;
 
             static bool autoPan = false;
             static float baseTime;
@@ -77,7 +76,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
             ImGui::SliderFloat("timeOffset", &tFloat, -5.0f, 5.0f);
             static bool freeze = false;
 
-            ImGui::Checkbox("glfwGetTime", &freeze);
+            ImGui::Checkbox("Freeze Time", &freeze);
 
             if (freeze)
                 sg->time = baseTime + tFloat;
@@ -116,19 +115,26 @@ void drawIMGUI(Renderer *myRenderer, iCubeRenderer*cubeSystem,
             else
                 v_angle = fmod(sg->time / 4.0f, glm::pi<float>() * 2.0) - glm::pi<float>();
 
-            ImGui::DragFloat("Zoom", &(camera.Zoom), .5f, 12.0f, 120.0f);
-            ImGui::SliderFloat("Aspect", &camera.Aspect, -3.0f, 3.0f);
-            ImGui::DragFloat2("Clip Near - Far", camClip, .01f, -100.0f, 100.0f);
+            camFOV = glm::degrees(sg->camera.getFOV());
+            ImGui::DragFloat("Field Of View", &camFOV, .5f, 12.0f, 120.0f);
 
-            sg->camera.projection = glm::perspective(glm::radians(camera.Zoom), camera.Aspect, camClip[0], camClip[1]);    //  1.0472 radians = 60 degrees
+            camAspect = sg->camera.getAspect();
+            ImGui::SliderFloat("Aspect", &camAspect, -3.0f, 3.0f);
+
+            sg->camera.getClipNearFar(&camClip[0], &camClip[1]);
+            ImGui::DragFloat2("Clip Near - Far", camClip, .01f, -1.0f, 1000.0f);
+
+            sg->camera.setPerspective(glm::radians(camFOV), camAspect, camClip[0], camClip[1]);    //  1.0472 radians = 60 degrees
 
             static float point[3] = { 0,0,0 };
 
             ImGui::DragFloat3("point", point, .1f, -10.0f, 10.0f);
-            glm::vec4 glmPoint = glm::vec4(point[0], point[1], point[2], 0.0);
+            glm::vec4 glmPoint = glm::vec4(point[0], point[1], point[2], 1.0);
 
-            glmPoint = sg->camera.projection * glmPoint;
+            glmPoint = sg->camera.projection() * glmPoint;
 
+            ImGui::Text("Transformed %.3f, %.3f, %.3f %.3f", glmPoint.x, glmPoint.y, glmPoint.z, glmPoint.w);
+            glmPoint /= glmPoint.w;
             ImGui::Text("Transformed %.3f, %.3f, %.3f %.3f", glmPoint.x, glmPoint.y, glmPoint.z, glmPoint.w);
 
             glm::mat4 vMat = glm::rotate(glm::mat4(1.0f), -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));

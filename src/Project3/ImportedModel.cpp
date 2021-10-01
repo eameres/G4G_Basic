@@ -19,7 +19,22 @@
 
 using namespace std;
 
-ObjRenderer::ObjRenderer(const char* filePath, Material* material, glm::mat4 m)
+ImportedModel::ImportedModel() {}
+
+ImportedModel::ImportedModel(const char* filePath) {
+
+}
+
+int ImportedModel::getNumVertices() { return numVertices; }
+std::vector<glm::vec3> ImportedModel::getVertices() { return vertices; }
+std::vector<glm::vec2> ImportedModel::getTextureCoords() { return texCoords; }
+std::vector<glm::vec3> ImportedModel::getNormals() { return normalVecs; }
+
+// ---------------------------------------------------------------
+
+ModelImporter::ModelImporter() {}
+
+ObjModel::ObjModel(const char* filePath, Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -33,26 +48,28 @@ ObjRenderer::ObjRenderer(const char* filePath, Material* material, glm::mat4 m)
     glGenBuffers(numVBOs = 2, VBO);
     glGenBuffers(1, &EBO);
 
-    ImportedModel myModel(filePath);
+    ModelImporter modelImporter = ModelImporter();
+    modelImporter.parseOBJ(filePath);
 
-    std::vector<glm::vec3> vert = myModel.getVertices();
-    std::vector<glm::vec2> tex = myModel.getTextureCoords();
-    std::vector<glm::vec3> norm = myModel.getNormals();
+    std::vector<float> verts = modelImporter.getVertices();
+    std::vector<float> tcs = modelImporter.getTextureCoordinates();
+    std::vector<float> normals = modelImporter.getNormals();
 
     std::vector<float> vbovalues;
     std::vector<int> indices;
 
-    for (int i = 0; i < myModel.getNumVertices(); i++) {
-        vbovalues.push_back((vert[i]).x);
-        vbovalues.push_back((vert[i]).y);
-        vbovalues.push_back((vert[i]).z);
+    for (int i = 0; i < modelImporter.getNumVertices(); i++) {
+        vbovalues.push_back(verts[i * 3]);
+        vbovalues.push_back(verts[i * 3 + 1]);
+        vbovalues.push_back(verts[i * 3 + 2]);
 
-        vbovalues.push_back(norm[i].x);
-        vbovalues.push_back(norm[i].y);
-        vbovalues.push_back(norm[i].z);
+        vbovalues.push_back(normals[i * 3]);
+        vbovalues.push_back(normals[i * 3 + 1]);
+        vbovalues.push_back(normals[i * 3 + 2]);
 
-        vbovalues.push_back((tex[i]).s);
-        vbovalues.push_back((tex[i]).t);
+        vbovalues.push_back(tcs[i * 2]);
+        vbovalues.push_back(tcs[i * 2 + 1]);
+
         indices.push_back(i);
     }
 
@@ -82,34 +99,6 @@ ObjRenderer::ObjRenderer(const char* filePath, Material* material, glm::mat4 m)
 
     glBindVertexArray(0);
 };
-
-
-
-ImportedModel::ImportedModel() {}
-
-ImportedModel::ImportedModel(const char* filePath) {
-	ModelImporter modelImporter = ModelImporter();
-	modelImporter.parseOBJ(filePath);
-	numVertices = modelImporter.getNumVertices();
-	std::vector<float> verts = modelImporter.getVertices();
-	std::vector<float> tcs = modelImporter.getTextureCoordinates();
-	std::vector<float> normals = modelImporter.getNormals();
-
-	for (int i = 0; i < numVertices; i++) {
-		vertices.push_back(glm::vec3(verts[i * 3], verts[i * 3 + 1], verts[i * 3 + 2]));
-		texCoords.push_back(glm::vec2(tcs[i * 2], tcs[i * 2 + 1]));
-		normalVecs.push_back(glm::vec3(normals[i * 3], normals[i * 3 + 1], normals[i * 3 + 2]));
-	}
-}
-
-int ImportedModel::getNumVertices() { return numVertices; }
-std::vector<glm::vec3> ImportedModel::getVertices() { return vertices; }
-std::vector<glm::vec2> ImportedModel::getTextureCoords() { return texCoords; }
-std::vector<glm::vec3> ImportedModel::getNormals() { return normalVecs; }
-
-// ---------------------------------------------------------------
-
-ModelImporter::ModelImporter() {}
 
 void ModelImporter::parseOBJ(const char* filePath) {
     float x, y, z;

@@ -56,9 +56,9 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cameraLoc));
     glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
-    glm::mat4 lightProjection = sg->light.projection * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
+    glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
     
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightProjection));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightViewProjection));
     
     glBindVertexArray(VAO);
 

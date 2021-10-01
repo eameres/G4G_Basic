@@ -15,7 +15,7 @@
 
 #include "renderer.h"
 
-TorusRenderer::TorusRenderer(Material* material, glm::mat4 m)
+TorusModel::TorusModel(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;

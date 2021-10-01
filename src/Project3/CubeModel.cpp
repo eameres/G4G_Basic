@@ -16,53 +16,53 @@
 #include "renderer.h"
 #include "ImportedModel.h"
 
-CubeRenderer::CubeRenderer(Material* material, glm::mat4 m)
+static const float vertices[288] = {
+          0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,1.0f,
+          0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,0.0f,
+         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,0.0f,
+         -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,0.0f,
+         -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,1.0f,
+          0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,1.0f,
+
+         -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,0.0f,
+          0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,0.0f,
+          0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,1.0f,
+          0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,1.0f,
+         -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,1.0f,
+         -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,0.0f,
+
+         -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f,0.0f,
+         -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f,1.0f,
+         -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f,1.0f,
+         -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f,1.0f,
+         -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f,0.0f,
+         -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f,0.0f,
+
+          0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f,1.0f,
+          0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f,0.0f,
+          0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f,0.0f,
+          0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f,0.0f,
+          0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 1.0f,1.0f,
+          0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.0f,1.0f,
+
+         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f,1.0f,
+          0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,1.0f,
+          0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f,0.0f,
+          0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 1.0f,0.0f,
+         -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,0.0f,
+         -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.0f,1.0f,
+
+          0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f,0.0f,
+          0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 1.0f,1.0f,
+         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f,1.0f,
+
+         -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f,1.0f,
+         -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f,0.0f,
+          0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f,0.0f
+};
+
+CubeModel::CubeModel(Material* material, glm::mat4 m)
 {
-    float vertices[288] = {
-           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,1.0f,
-           0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,0.0f,
-          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,0.0f,
-          -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,0.0f,
-          -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,1.0f,
-           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 1.0f,1.0f,
-
-          -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,1.0f,
-           0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,0.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,0.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,0.0f,
-          -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.0f,1.0f,
-          -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 1.0f,1.0f,
-
-          -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f,1.0f,
-          -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 1.0f,0.0f,
-          -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f,0.0f,
-          -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.0f,0.0f,
-          -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.0f,1.0f,
-          -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 1.0f,1.0f,
-
-           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f,1.0f,
-           0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f,0.0f,
-           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f,0.0f,
-           0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f,0.0f,
-           0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.0f,1.0f,
-           0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 1.0f,1.0f,
-
-          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,1.0f,
-           0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,0.0f,
-           0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,0.0f,
-           0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,0.0f,
-          -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.0f,1.0f,
-          -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 1.0f,1.0f,
-
-           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f,1.0f,
-           0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 1.0f,0.0f,
-          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f,0.0f,
-
-          -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.0f,0.0f,
-          -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.0f,1.0f,
-           0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 1.0f,1.0f
-    };
-
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
@@ -102,7 +102,7 @@ CubeRenderer::CubeRenderer(Material* material, glm::mat4 m)
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
 }
-float cubeVertexPositions[108] =
+static const float cubeVertexPositions[108] =
 {
     // back face
     1.0f, -1.0f, -1.0f,  -1.0f, -1.0f, -1.0f,  -1.0f,  1.0f, -1.0f,  /**/ -1.0f, 1.0f, -1.0f,   1.0f,  1.0f, -1.0f,   1.0f, -1.0f, -1.0f,
@@ -123,7 +123,7 @@ float cubeVertexPositions[108] =
     1.0f,  1.0f,  1.0f,   1.0f,  1.0f, -1.0f,  -1.0f,  1.0f, -1.0f,  /**/ -1.0f, 1.0f, -1.0f,  -1.0f,  1.0f,  1.0f,   1.0f,  1.0f,  1.0f
 };
 
-float cubeVertexNormals[108] = {
+static const float cubeVertexNormals[108] = {
      0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,   0.0f,  0.0f, -1.0f,
      1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,   1.0f,  0.0f,  0.0f,
      0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,   0.0f,  0.0f,  1.0f,
@@ -131,7 +131,7 @@ float cubeVertexNormals[108] = {
      0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,   0.0f, -1.0f,  0.0f,
      0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,   0.0f,  1.0f,  0.0f,
 };
-float cubeTexCoords[72] = {
+static const float cubeTexCoords[72] = {
     1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
     1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
     1.0f, 0.0f,  0.0f, 0.0f,  1.0f, 1.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f,
@@ -140,7 +140,7 @@ float cubeTexCoords[72] = {
     1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,  1.0f, 1.0f
 };
 
-SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
+SkyboxModel::SkyboxModel(Material* material, glm::mat4 m)
 {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
@@ -157,7 +157,7 @@ SkyboxRenderer::SkyboxRenderer(Material* material, glm::mat4 m)
     glEnableVertexAttribArray(0);
 }
 
-void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
+void SkyboxModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -192,7 +192,7 @@ void SkyboxRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, Sc
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void iCubeRenderer::setupIMatrices() {
+void iCubeModel::setupIMatrices() {
     unsigned int amount = maxParticles;
     iModelMatrices = new glm::mat4[amount];
     iModelColors = new glm::vec3[amount];
@@ -244,7 +244,7 @@ void iCubeRenderer::setupIMatrices() {
     }
 }
 
-iCubeRenderer::iCubeRenderer(Material* material, glm::mat4 m)
+iCubeModel::iCubeModel(Material* material, glm::mat4 m)
 {
 
     modelMatrix = m;
@@ -281,7 +281,7 @@ iCubeRenderer::iCubeRenderer(Material* material, glm::mat4 m)
     glBindVertexArray(0);
 }
 
-void iCubeRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
+void iCubeModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
@@ -307,9 +307,9 @@ void iCubeRenderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, Sce
 
     glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
-    glm::mat4 lightProjection = sg->light.projection * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
+    glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightProjection));
+    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightViewProjection));
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

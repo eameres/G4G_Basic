@@ -15,21 +15,21 @@
 
 #include "renderer.h"
 
-QuadRenderer::QuadRenderer(Material* material, glm::mat4 m)
-{
-    // ------------------------------------------------------------------
-    unsigned int indices[6] = {  // note that we start from 0!
-        3, 1, 0,  // first Triangle
-        0, 2, 3   // second Triangle
-    };
-    float vertices[44] = {
-        // positions           // normal           // color             // texture
-         0.5f,  0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,    1.0f, 1.0f,     // top right
-         0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 0.0f, 1.0f,    1.0f, 0.0f,     // bottom right
-        -0.5f,  0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f,    0.0f, 1.0f,     // top left
-        -0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 1.0f, 1.0f,    0.0f, 0.0f      // bottom left
-    };
+static const unsigned int indices[6] = {  // note that we start from 0!
+    3, 1, 0,  // first Triangle
+    0, 2, 3   // second Triangle
+};
 
+static const float vertices[44] = {
+    // positions           // normal           // color             // texture
+     0.5f,  0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 1.0f, 0.0f,    1.0f, 1.0f,     // top right
+     0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   0.0f, 0.0f, 1.0f,    1.0f, 0.0f,     // bottom right
+    -0.5f,  0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 1.0f,    0.0f, 1.0f,     // top left
+    -0.5f, -0.5f, 0.0f,    0.0f, 0.0f, 1.0f,   1.0f, 1.0f, 1.0f,    0.0f, 0.0f      // bottom left
+};
+
+QuadModel::QuadModel(Material* material, glm::mat4 m)
+{
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 

@@ -15,9 +15,9 @@
 
 #include "renderer.h"
 
-#include "SphereRenderer.h"
+#include "SphereModel.h"
 
-SphereRenderer::SphereRenderer(Material* material, glm::mat4 m)
+SphereModel::SphereModel(Material* material, glm::mat4 m)
 {
     Sphere mySphere;
     // set up vertex data (and buffer(s)) and configure vertex attributes
@@ -32,10 +32,7 @@ SphereRenderer::SphereRenderer(Material* material, glm::mat4 m)
     glGenBuffers(numVBOs = 2, VBO);
     glGenBuffers(1, &EBO);
 
-    std::vector<int> ind = mySphere.getIndices();
-    std::vector<float> verts = mySphere.getVerts();
-
-    int numIndices = mySphere.getNumIndices();
+    int numIndices = mySphere.getIndices().size();
     //
     // Notice!!!  Since this is a unit sphere, 
     // we can use the vertex coordinates as the vertex normals !!!
@@ -43,10 +40,10 @@ SphereRenderer::SphereRenderer(Material* material, glm::mat4 m)
     indexCount = numIndices;
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, verts.size() * 4, &verts[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, mySphere.getVerts().size() * 4, mySphere.getVerts().data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, ind.size() * 4, &ind[0], GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mySphere.getIndices().size() * 4, mySphere.getIndices().data(), GL_STATIC_DRAW);
 
     // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);

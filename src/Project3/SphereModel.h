@@ -3,9 +3,9 @@
 #include <vector>
 #include "Material.h"
 
-class SphereRenderer : public Renderer {
+class SphereModel : public Renderer {
 public:
-    SphereRenderer(Material*, glm::mat4 m);
+    SphereModel(Material*, glm::mat4 m);
 };
 
 class Sphere

@@ -70,34 +70,34 @@ public:
 
 };
 
-class ObjRenderer : public Renderer {
+class ObjModel : public Renderer {
 public:
-    ObjRenderer(const char* filePath, Material*, glm::mat4 m);
+    ObjModel(const char* filePath, Material*, glm::mat4 m);
 };
 
-class TorusRenderer : public Renderer {
+class TorusModel : public Renderer {
 public:
-    TorusRenderer(Material*, glm::mat4 m);
+    TorusModel(Material*, glm::mat4 m);
 };
 
-class CubeRenderer : public Renderer {
+class CubeModel : public Renderer {
 public:
-    CubeRenderer(Material*, glm::mat4 m);
+    CubeModel(Material*, glm::mat4 m);
 };
 
-class QuadRenderer : public Renderer {
+class QuadModel : public Renderer {
 public:
-    QuadRenderer(Material*, glm::mat4 m);
+    QuadModel(Material*, glm::mat4 m);
 };
 
-class SkyboxRenderer : public Renderer {
+class SkyboxModel : public Renderer {
     
 public:
-    SkyboxRenderer(Material*, glm::mat4 m);
+    SkyboxModel(Material*, glm::mat4 m);
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
 };
 
-class iCubeRenderer : public Renderer {
+class iCubeModel : public Renderer {
     
 public:
     int maxParticles = 25000;
@@ -106,12 +106,12 @@ public:
     glm::vec3* iModelColors;
     
 public:
-    iCubeRenderer(Material*, glm::mat4 m);
+    iCubeModel(Material*, glm::mat4 m);
     void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
     
 private:
     void setupIMatrices(void);
 };
 
-#include "SphereRenderer.h"
+#include "SphereModel.h"
 

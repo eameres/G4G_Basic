@@ -17,12 +17,57 @@
 
 #include "renderer.h"
 
+struct Orthographic {
+    float clipNear, clipFar;
+    float clipRight, clipLeft;
+    float clipBottom, clipTop;
+};
+
+struct Perspective {
+    float clipNear, clipFar;
+    float aspect, fov;
+    float width, height;
+};
+
 struct emitterCollector { // a light or camera common attributes
+private:
+    glm::mat4 _projection;
+    enum { ORTHO, PERSP } ecType;
+    union {
+        Perspective perspective;
+        Orthographic orthographic;
+    };
+
+public:
     glm::vec3 position;
     glm::vec3 target;
     glm::vec3 up;
 
-    glm::mat4 projection;
+    glm::mat4 projection() { return _projection; }
+
+    float getFOV() { return perspective.fov; }
+    void setFOV(float fov) { setPerspective(fov, perspective.aspect, perspective.clipNear, perspective.clipFar); }
+
+    float getAspect() { return perspective.aspect; }
+    void setAspect(float aspect) { setPerspective(perspective.fov, perspective.aspect = aspect, perspective.clipNear, perspective.clipFar); }
+
+    void getClipNearFar(float* near, float *far) {*near = perspective.clipNear, *far = perspective.clipFar; }
+    void setClipNearFar(float near, float far) {
+        if (ecType == PERSP) 
+            setPerspective(perspective.fov, perspective.aspect, perspective.clipNear = near, perspective.clipFar = far);
+        else if (ecType == ORTHO) 
+            setOrtho(orthographic.clipLeft, orthographic.clipRight, orthographic.clipTop, orthographic.clipBottom, orthographic.clipNear = near, orthographic.clipFar = far);
+    }
+
+    void setPerspective(float fov, float aspect, float clipNear, float clipFar) {
+        ecType = ORTHO;
+        _projection = glm::perspective(perspective.fov = fov, perspective.aspect = aspect, perspective.clipNear = clipNear, perspective.clipFar = clipFar);
+    }
+
+    void setOrtho(float clipLeft, float clipRight, float clipBottom,float clipTop , float clipNear, float clipFar) {
+        ecType = PERSP;
+        _projection = glm::ortho(orthographic.clipLeft = clipLeft, orthographic.clipRight = clipRight, orthographic.clipTop = clipTop, orthographic.clipBottom = clipBottom, orthographic.clipNear = clipNear, orthographic.clipFar = clipFar);
+    }
 };
 
 struct SceneGraph;
@@ -100,10 +145,12 @@ public:
 
     void renderFrom(emitterCollector ec, double deltaTime) {
 
-        glm::mat4 pMat = ec.projection * glm::lookAt(ec.position, ec.target, ec.up);
-        glm::mat4 mmMat = glm::mat4(1.0);
+        // we use a combined projection * view matrix 
+        // and a "treeview" matrix to hold the tree transform which gets combined with the models later
+        glm::mat4 vpMat = ec.projection() * glm::lookAt(ec.position, ec.target, ec.up);
+        glm::mat4 tvMat = glm::mat4(1.0);
 
-        tree->traverse(mmMat, pMat, deltaTime, this);
+        tree->traverse(tvMat, vpMat, deltaTime, this);
     }
 };
 
