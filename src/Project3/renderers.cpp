@@ -26,6 +26,7 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
 { // here's where the "actual drawing" gets done
 
     glm::mat4 mvp;
+    unsigned int shaderID;
 
     if (!enabled) return;
 
@@ -37,28 +38,38 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glm::vec3 lightLoc = sg->light.position;
     glm::vec3 cameraLoc = sg->camera.position;
 
-    myMaterial->use();
+    shaderID = myMaterial->myShader->ID;
+    
+    /*if (sg->renderPass == SceneGraph::SHADOW){
+        if (depthMaterial == NULL){
+            Material::materials["depthMaterial"]->use();
+            shaderID = Material::materials["depthMaterial"]->myShader->ID;
+        }
+    }else*/
+    {
+        myMaterial->use();
+    }
 
     //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
     
     mvp = pMat * vMat * modelMatrix;
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniform1f(glGetUniformLocation(myMaterial->myShader->ID, "myTime"), elapsedTime += (float)deltaTime);
-    glUniform1f(glGetUniformLocation(myMaterial->myShader->ID, "shine"), myMaterial->shine);
+    glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
+    glUniform1f(glGetUniformLocation(shaderID, "shine"), myMaterial->shine);
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
-    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), 1, glm::value_ptr(cameraLoc));
-    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
+    glUniform3fv(glGetUniformLocation(shaderID, "cPos"), 1, glm::value_ptr(cameraLoc));
+    glUniform3fv(glGetUniformLocation(shaderID, "lPos"), 1, glm::value_ptr(lightLoc));
 
     glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
     
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightViewProjection));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID,"lightSpaceMatrix"),1,GL_FALSE,glm::value_ptr(lightViewProjection));
     
     glBindVertexArray(VAO);
 

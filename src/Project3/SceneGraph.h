@@ -32,13 +32,14 @@ struct Perspective {
 struct emitterCollector { // a light or camera common attributes
 private:
     glm::mat4 _projection;
-    enum { ORTHO, PERSP } ecType;
+    enum { ORTHO, PERSP } pType;
     union {
         Perspective perspective;
         Orthographic orthographic;
     };
 
 public:
+    enum { LIGHT, CAMERA } ecType;
     glm::vec3 position;
     glm::vec3 target;
     glm::vec3 up;
@@ -53,19 +54,19 @@ public:
 
     void getClipNearFar(float* near, float *far) {*near = perspective.clipNear, *far = perspective.clipFar; }
     void setClipNearFar(float near, float far) {
-        if (ecType == PERSP) 
+        if (pType == PERSP)
             setPerspective(perspective.fov, perspective.aspect, perspective.clipNear = near, perspective.clipFar = far);
-        else if (ecType == ORTHO) 
+        else if (pType == ORTHO)
             setOrtho(orthographic.clipLeft, orthographic.clipRight, orthographic.clipTop, orthographic.clipBottom, orthographic.clipNear = near, orthographic.clipFar = far);
     }
 
     void setPerspective(float fov, float aspect, float clipNear, float clipFar) {
-        ecType = ORTHO;
+        pType = PERSP;
         _projection = glm::perspective(perspective.fov = fov, perspective.aspect = aspect, perspective.clipNear = clipNear, perspective.clipFar = clipFar);
     }
 
     void setOrtho(float clipLeft, float clipRight, float clipBottom,float clipTop , float clipNear, float clipFar) {
-        ecType = PERSP;
+        pType = ORTHO;
         _projection = glm::ortho(orthographic.clipLeft = clipLeft, orthographic.clipRight = clipRight, orthographic.clipTop = clipTop, orthographic.clipBottom = clipBottom, orthographic.clipNear = clipNear, orthographic.clipFar = clipFar);
     }
 };
@@ -103,6 +104,8 @@ struct SceneGraph {
     emitterCollector camera;
     emitterCollector light;
 
+    enum { SHADOW, REGULAR } renderPass;
+    
     std::vector<Renderer*> rendererList;
 
     treeNode* tree;
@@ -138,13 +141,22 @@ public:
     }
 
     SceneGraph() {
+        
+        camera.ecType = emitterCollector::CAMERA;
+        light.ecType = emitterCollector::LIGHT;
+    
         camera.up = glm::vec3(0.0, 1.0, 0.0);
         light.up = glm::vec3(0.0, 1.0, 0.0);
         currNode = tree = new treeNode(glm::mat4(1), (treeNode*)NULL);
     }
 
     void renderFrom(emitterCollector ec, double deltaTime) {
-
+        
+        if (ec.ecType == emitterCollector::LIGHT){
+            renderPass = SHADOW;
+        }else
+            renderPass = REGULAR;
+        
         // we use a combined projection * view matrix 
         // and a "treeview" matrix to hold the tree transform which gets combined with the models later
         glm::mat4 vpMat = ec.projection() * glm::lookAt(ec.position, ec.target, ec.up);
