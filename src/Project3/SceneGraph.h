@@ -99,12 +99,12 @@ public:
     void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, SceneGraph * sg);
 };
 
-struct SceneGraph {
-
+class SceneGraph {
+public:
     emitterCollector camera;
     emitterCollector light;
 
-    enum { SHADOW, REGULAR } renderPass;
+    enum rp { SHADOW, REGULAR } renderPass;
     
     std::vector<Renderer*> rendererList;
 

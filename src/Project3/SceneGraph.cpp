@@ -1,4 +1,4 @@
-#include "SceneGraph.h"
+#include "renderer.h"
 
 void treeNode::traverse(glm::mat4 treeViewMat, glm::mat4 viewProjection, double deltaTime, SceneGraph *sg) {
 

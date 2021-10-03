@@ -38,17 +38,8 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glm::vec3 lightLoc = sg->light.position;
     glm::vec3 cameraLoc = sg->camera.position;
 
-    shaderID = myMaterial->myShader->ID;
-    
-    if (sg->renderPass == SceneGraph::SHADOW){
-        if (depthMaterial == NULL){
-            Material::materials["depthMaterial"]->use();
-            shaderID = Material::materials["depthMaterial"]->myShader->ID;
-        }
-    }else
-    {
-        myMaterial->use();
-    }
+    shaderID =  myMaterial->use(sg->renderPass);
+   
 
     //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 

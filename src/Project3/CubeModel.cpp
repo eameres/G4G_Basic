@@ -15,6 +15,7 @@
 
 #include "renderer.h"
 #include "ImportedModel.h"
+#include "SceneGraph.h"
 
 static const float vertices[288] = {
           0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.0f,1.0f,
@@ -170,7 +171,7 @@ void SkyboxModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, Scene
     if (myMaterial == NULL)
         myMaterial = Material::materials["green"];
 
-    myMaterial->use();
+    unsigned int ID = myMaterial->use(sg->renderPass);
 
     myMaterial->myShader->setInt("skybox", 0);
 
@@ -182,11 +183,11 @@ void SkyboxModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, Scene
 
     mvp = pMat * vMat;
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(vMat))));
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "v"), 1, GL_FALSE, glm::value_ptr(glm::mat4(glm::mat3(vMat))));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -284,6 +285,7 @@ iCubeModel::iCubeModel(Material* material, glm::mat4 m)
 void iCubeModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
 
+    unsigned int ID;
     glm::mat4 mvp;
 
     glm::vec3 lightLoc = sg->light.position;
@@ -294,22 +296,22 @@ void iCubeModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneG
     if (myMaterial == NULL)
         myMaterial = Material::materials["green"];
 
-    myMaterial->use();
+    ID = myMaterial->use(sg->renderPass);
 
-    glUniform3f(glGetUniformLocation(myMaterial->myShader->ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
-    glUniform3fv(glGetUniformLocation(myMaterial->myShader->ID, "lPos"), 1, glm::value_ptr(lightLoc));
+    glUniform3f(glGetUniformLocation(ID, "cPos"), -glm::vec3(vMat[3])[0], -glm::vec3(vMat[3])[1], -glm::vec3(vMat[3])[2]);
+    glUniform3fv(glGetUniformLocation(ID, "lPos"), 1, glm::value_ptr(lightLoc));
 
     mvp = pMat * vMat * modelMatrix;
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
     glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
 
-    glUniformMatrix4fv(glGetUniformLocation(myMaterial->myShader->ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightViewProjection));
+    glUniformMatrix4fv(glGetUniformLocation(ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightViewProjection));
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);

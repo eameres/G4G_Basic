@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Material.h"
 #include "SceneGraph.h"
+#include "Material.h"
 
 struct SceneGraph;
 
@@ -20,7 +20,6 @@ public :
     glm::mat4 modelMatrix;
 
     Material* myMaterial = NULL;
-    Material* depthMaterial = NULL;
 
 protected:
     void setupColorAttrib();

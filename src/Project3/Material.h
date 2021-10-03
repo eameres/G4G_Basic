@@ -8,6 +8,10 @@
 #include <map>
 #include "shader_s.h"
 
+
+// materials currently only include basic diffuse and specular properties
+// there is room for more textures, but needs to be exanded
+// materials may also need to include multiple shaders for differnt render passes
 class Material {
 public:
     Shader* myShader;
@@ -53,8 +57,14 @@ public:
         materials.erase(name);
     }
 
-    void use() {
+    unsigned int use(enum SceneGraph::rp enc) {
 
+        if (enc == SceneGraph::SHADOW) { // try to use a simplified shader if we're in the shadow pass
+            if ((myShader != Shader::shaders["SkyBox"]) && (myShader != Shader::shaders["Particle"])) {
+                Shader::shaders["Depth"]->use();
+                return Shader::shaders["Depth"]->ID;
+            }
+        }
         assert(myShader != NULL);
 
         myShader->use();
@@ -65,7 +75,7 @@ public:
 
         glActiveTexture(GL_TEXTURE1);
 
-        if (shadow)
+        if (shadow) // this is if we're using the shadow (depth) texture, not if we're in the Shadow generating pass
             glBindTexture(GL_TEXTURE_2D, textures[1]);
         else
             glBindTexture(GL_TEXTURE_CUBE_MAP, textures[1]);
@@ -74,5 +84,7 @@ public:
         myShader->setInt("shadowMap", 1);
 
         glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));
+
+        return myShader->ID;
     }
 };
