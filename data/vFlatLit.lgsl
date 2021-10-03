@@ -26,10 +26,10 @@ out VS_OUT{
 
 void main()
 {
-	vs_out.FragPos = vec3(v* m * vec4(aPos, 1.0));
+	vs_out.FragPos = vec3(v*m * vec4(aPos, 1.0));
     vs_out.Normal = transpose(inverse(mat3(v*m))) * aNormal;
     //vs_out.TexCoords = aTexCoords;
-    vs_out.FragPosLightSpace = lightSpaceMatrix * vec4(vs_out.FragPos, 1.0);
+    vs_out.FragPosLightSpace = lightSpaceMatrix * v*m*vec4(aPos, 1.0);
     
 	varyingColor = vec4(aCol,1.0);
 
@@ -45,6 +45,6 @@ void main()
     //FragPos = vec3(m * (vec4( aPos + (aNormal*sin(myTime)/5.0), 1.0) ) );
     Normal = mat3(transpose(inverse(v*m))) * aNormal;  
     
-    gl_Position = p * vec4(FragPos, 1.0);
+    gl_Position = p * v * m * vec4(aPos, 1.0);
 }
 

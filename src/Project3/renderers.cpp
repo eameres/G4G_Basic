@@ -40,12 +40,12 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
 
     shaderID = myMaterial->myShader->ID;
     
-    /*if (sg->renderPass == SceneGraph::SHADOW){
+    if (sg->renderPass == SceneGraph::SHADOW){
         if (depthMaterial == NULL){
             Material::materials["depthMaterial"]->use();
             shaderID = Material::materials["depthMaterial"]->myShader->ID;
         }
-    }else*/
+    }else
     {
         myMaterial->use();
     }

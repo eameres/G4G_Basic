@@ -149,7 +149,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
 
             //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
         
-            ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(128, 128));
+            ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(512, 512));
 
             ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
 

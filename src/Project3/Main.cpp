@@ -100,14 +100,14 @@ void setupScene(SceneGraph *scene,treeNode **nodes)
     nodes[1]->enabled = false;
 
     glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>()/2.0f, glm::vec3(-1, 0, 0));
-    scene->addRenderer(frontQuad = new QuadModel(Material::materials["brick"], floorXF)); // our floor quad
+    //scene->addRenderer(frontQuad = new QuadModel(Material::materials["brick"], floorXF)); // our floor quad
 
     //scene->addRenderer(new ObjModel("data/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     scene->addRenderer(new ObjModel("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
 
     nodes[2] = scene->addChild(glm::mat4(1));
 
-    scene->addRenderer(cubeSystem = new iCubeModel(Material::materials["pMaterial"], glm::translate(glm::mat4(.025f), glm::vec3(0.0f, 0.0f, 0.0f))));
+    scene->addRenderer(cubeSystem = new iCubeModel(Material::materials["pMaterial"], glm::translate(glm::scale(glm::mat4(1.0f),glm::vec3(.025f)), glm::vec3(0.0f, 0.0f, 0.0f))));
 
     scene->addRenderer(frontQuad = new QuadModel(Material::materials["rpi"], glm::mat4(1.0f))); // our "first quad
 
@@ -225,7 +225,7 @@ int main()
     scene.camera.position = glm::vec4(0, 0, -5, 1.0f);
     scene.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
-    scene.light.setOrtho(-2.0f, 2.0f, -2.0f, 2.0f, 1.0f, 7.5f);
+    scene.light.setOrtho(-3.0f, 3.0f, -3.0f, 3.0f, 1.0f, 7.5f);
     scene.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
     
@@ -274,6 +274,8 @@ int main()
     scene.addRenderer(new CubeModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, 0.0f))));
     scene.addRenderer(new SphereModel(Material::materials["litMaterial"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
     
+    scene.addRenderer(new SphereModel(Material::materials["green"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, -2.0f, 0.0f))));
+    
     scene.addRenderer(new CubeModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.0f))));
 
     CubeModel* lightCube = NULL;
@@ -319,10 +321,14 @@ int main()
 
         // moving light source, must set it's position...
         glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), (float)scene.time, glm::vec3(1, 0, 0.0f));
-        scene.light.position = rotate * glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
+        scene.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
+        
         // show a cube from that position
-        lightCube->modelMatrix = glm::scale(glm::translate(glm::mat4(1.0f), scene.light.position), glm::vec3(.25f));
+        lightCube->modelMatrix = rotate * glm::scale(glm::translate(glm::mat4(1.0f), scene.light.position), glm::vec3(.25f));
+        
+        scene.light.position = lightCube->modelMatrix * glm::vec4(0.0,0.0,0.0,1.0);
+
 
         {
             // first we do the "shadow pass"  really just for creating a depth buffer from the light's perspective
