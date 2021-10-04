@@ -23,6 +23,10 @@ public:
     glm::vec4 color;
 
     static std::map<std::string,Material*> materials;
+    double _lastChange;
+
+    void lastChange(double _lc) { _lastChange = _lc; }
+    double lastChange() { return _lastChange; }
 
 public:
     Material(Shader* _shader, std::string _name, GLint _texture, glm::vec4 _color) {

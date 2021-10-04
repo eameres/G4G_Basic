@@ -189,6 +189,8 @@ void SkyboxModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, Scene
 
     glUniformMatrix4fv(glGetUniformLocation(ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
+    glUniform1f(glGetUniformLocation(ID, "myTime"), elapsedTime += (float)deltaTime);
+
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
@@ -212,7 +214,7 @@ void iCubeModel::setupIMatrices() {
 
     glBindVertexArray(VAO);
 
-    // configure instanced array
+    // configure instanced array4
     // -------------------------
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
     glBufferData(GL_ARRAY_BUFFER, amount * (sizeof(glm::mat4) + sizeof(glm::vec3)), 0, GL_STATIC_DRAW);
@@ -284,7 +286,14 @@ iCubeModel::iCubeModel(Material* material, glm::mat4 m)
     setupIMatrices();
 
     glBindVertexArray(0);
+    myMaterial->lastChange(0.0);
+
+    instances = 250;
 }
+// havign a unique render routine is only necessary if you want to modify the VBO before calling render.
+// perhaps we need a "preRender" method?
+
+/*
 
 void iCubeModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
@@ -316,11 +325,28 @@ void iCubeModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneG
     glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
 
     glUniformMatrix4fv(glGetUniformLocation(ID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightViewProjection));
+    glUniform1f(glGetUniformLocation(ID, "myTime"), elapsedTime += (float)deltaTime);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    glBindVertexArray(VAO);    
+    glBindVertexArray(VAO);
+
+    if (myMaterial->lastChange()+3.0 < elapsedTime) {
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+        iModelColors = new glm::vec3[instances];
+
+        for (unsigned int i = 0; i < instances; i++)
+        {
+
+            iModelColors[i] = glm::vec3((float)(rand() % 100) / 100.0f, (float)(rand() % 100) / 100.0f, (float)(rand() % 100) / 100.0f);
+        }
+
+        glBufferSubData(GL_ARRAY_BUFFER, maxParticles * sizeof(glm::mat4), instances * sizeof(glm::vec3), &iModelColors[0]);
+
+        myMaterial->lastChange(elapsedTime);
+    }
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, instances);
 }
+*/

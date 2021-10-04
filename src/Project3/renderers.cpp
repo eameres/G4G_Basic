@@ -39,10 +39,6 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glm::vec3 cameraLoc = sg->camera.position;
 
     shaderID =  myMaterial->use(sg->renderPass);
-   
-
-    //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
-
     
     mvp = pMat * vMat * modelMatrix;
 
@@ -69,11 +65,10 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
 
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    if (indexCount < 0) {
-        glDrawArrays(GL_TRIANGLES, 0, -indexCount);
-    }
+    if (indexCount < 0) 
+        glDrawArraysInstanced(GL_TRIANGLES, 0, -indexCount, instances);
     else
-        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+        glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0, instances);
 }
 
 void Renderer::setupColorAttrib() {

@@ -8,6 +8,7 @@ struct SceneGraph;
 class Renderer {
 public:
     static std::vector<Renderer*> renderList;
+    int instances = 1;
 
 protected:
     unsigned int VBO[8], VAO = 0, EBO = 0;
@@ -101,14 +102,12 @@ class iCubeModel : public Renderer {
     
 public:
     int maxParticles = 25000;
-    int instances = 250;
     glm::mat4* iModelMatrices;
     glm::vec3* iModelColors;
     
 public:
     iCubeModel(Material*, glm::mat4 m);
-    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
-    
+    //void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);
 private:
     void setupIMatrices(void);
 };
