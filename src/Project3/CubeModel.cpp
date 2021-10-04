@@ -214,8 +214,10 @@ void iCubeModel::setupIMatrices() {
 
     // configure instanced array
     // -------------------------
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[4]);
-    glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), &iModelMatrices[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glBufferData(GL_ARRAY_BUFFER, amount * (sizeof(glm::mat4) + sizeof(glm::vec3)), 0, GL_STATIC_DRAW);
+
+    glBufferSubData(GL_ARRAY_BUFFER, 0, amount * sizeof(glm::mat4), &iModelMatrices[0]);
 
     // set transformation matrices and color as an instance vertex attribute (with divisor 1)
     // -----------------------------------------------------------------------------------------------------------------------------------
@@ -236,10 +238,10 @@ void iCubeModel::setupIMatrices() {
     glVertexAttribDivisor(7, 1);
 
     {   // setup color per instance
-        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-        glBufferData(GL_ARRAY_BUFFER, amount * sizeof(glm::vec3), &iModelColors[0], GL_STATIC_DRAW);
+        //glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+        glBufferSubData(GL_ARRAY_BUFFER, amount * sizeof(glm::mat4), amount * sizeof(glm::vec3), &iModelColors[0]);
 
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(amount * sizeof(glm::mat4)));
         glEnableVertexAttribArray(2);
         glVertexAttribDivisor(2, 1);
     }
@@ -255,26 +257,28 @@ iCubeModel::iCubeModel(Material* material, glm::mat4 m)
     glBindVertexArray(VAO);
 
     // position attribute
-    glGenBuffers(numVBOs = 5, VBO);
+    glGenBuffers(numVBOs = 2, VBO);
+
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions), cubeVertexPositions, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions)+ sizeof(cubeVertexNormals)+ sizeof(cubeTexCoords), 0, GL_STATIC_DRAW);
+
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(cubeVertexPositions), cubeVertexPositions);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // normal attribute
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertexNormals), cubeVertexNormals, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions), sizeof(cubeVertexNormals), cubeVertexNormals);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)sizeof(cubeVertexPositions));
     glEnableVertexAttribArray(1);
 
     indexCount = -36; // since we have no indices, we tell the render call to use raw triangles by setting indexCount to -numVertices
 
     // texture attribute
-    glBindBuffer(GL_ARRAY_BUFFER, VBO[3]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeTexCoords), cubeTexCoords, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(cubeVertexPositions)+ sizeof(cubeVertexNormals),sizeof(cubeTexCoords), cubeTexCoords);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(sizeof(cubeVertexPositions) + sizeof(cubeVertexNormals)));
     glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     //setupColorAttrib();
     setupIMatrices();
@@ -317,6 +321,6 @@ void iCubeModel::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneG
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    glBindVertexArray(VAO);
+    glBindVertexArray(VAO);    
     glDrawArraysInstanced(GL_TRIANGLES, 0, 36, instances);
 }

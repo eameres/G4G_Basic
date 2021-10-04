@@ -51,7 +51,6 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
     glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
-    glUniform1f(glGetUniformLocation(shaderID, "shine"), myMaterial->shine);
 
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 

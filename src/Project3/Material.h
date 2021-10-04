@@ -83,6 +83,8 @@ public:
         myShader->setInt("EnvTexture", 1);
         myShader->setInt("shadowMap", 1);
 
+        glUniform1f(glGetUniformLocation(myShader->ID, "shine"), shine);
+
         glUniform4fv(glGetUniformLocation(myShader->ID, "ourColor"), 1, glm::value_ptr(color));
 
         return myShader->ID;
