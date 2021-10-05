@@ -89,6 +89,11 @@ public:
 class QuadModel : public Renderer {
 public:
     QuadModel(Material*, glm::mat4 m);
+}; 
+
+class TriangleModel : public Renderer {
+public:
+    TriangleModel(Material*, glm::mat4 m);
 };
 
 class SkyboxModel : public Renderer {

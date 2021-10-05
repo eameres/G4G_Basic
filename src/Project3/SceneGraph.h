@@ -104,13 +104,13 @@ public:
     emitterCollector camera;
     emitterCollector light;
 
-    enum rp { SHADOW, REGULAR } renderPass;
+    enum rp { SHADOW, REGULAR } renderPass = REGULAR;
     
     std::vector<Renderer*> rendererList;
 
     treeNode* tree;
     treeNode* currNode;
-    double time;
+    double time = 0.0;
 
 public:
 

@@ -136,7 +136,7 @@ static void drawMyGUI(SceneGraph* sg, const char * name) {
 
         ImGui::End();
 
-        ShaderEditor(sg, texMap);
+        ShaderEditor(sg);
         // IMGUI Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

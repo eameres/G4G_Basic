@@ -40,7 +40,7 @@
 * Change Chapter# to Chapter0, Chapter1, Chapter1a, or Chapter2 to render different chapters
 */
 
-Chapter2 myDemo;
+Chapter1 myDemo;
 
 // settings
 unsigned int scrn_width = 1280;

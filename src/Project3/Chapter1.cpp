@@ -36,8 +36,6 @@
 
 #include "Chapter0.h"
 
-static std::map<std::string, unsigned int> texMap;
-
 // settings
 extern unsigned int scrn_width;
 extern unsigned int scrn_height;
@@ -45,10 +43,7 @@ extern unsigned int scrn_height;
 static SceneGraph scene;
 static SceneGraph* globalScene;
 
-static unsigned int texture[] = { 0,1,2,3 };
-
-static SkyboxModel* mySky;
-static Renderer* cube;
+Renderer* triangle;
 
 static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
@@ -77,7 +72,7 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Graphics For Games Chapter 1");  // Create a window and append into it.
+        ImGui::Begin("Graphics For Games Chapter 1 - First Triangle");  // Create a window and append into it.
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -92,14 +87,14 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
         else
             sg->time = baseTime = glfwGetTime();
 
-        ImGui::Text("Model Matrix");
-        // values we'll use to derive a model matrix
-        ImGui::DragFloat3("Translate", transVec, .01f, -3.0f, 3.0f);
-        ImGui::InputFloat3("Axis", axis, "%.2f");
-        ImGui::SliderAngle("Angle", &angle, -90.0f, 90.0f);
-        ImGui::DragFloat3("Scale", scaleVec, .01f, -3.0f, 3.0f);
-
         if (myRenderer != NULL) {
+            ImGui::Text("Model Matrix");
+            // values we'll use to derive a model matrix
+            ImGui::DragFloat3("Translate", transVec, .01f, -3.0f, 3.0f);
+            ImGui::InputFloat3("Axis", axis, "%.2f");
+            ImGui::SliderAngle("Angle", &angle, -90.0f, 90.0f);
+            ImGui::DragFloat3("Scale", scaleVec, .01f, -3.0f, 3.0f);
+
             // factor in the results of imgui tweaks for the next round...
             myRenderer->setXForm(glm::mat4(1.0f));
             myRenderer->translate(transVec);
@@ -136,9 +131,9 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
 
         ImGui::NewLine();
 
+        ShaderEditor(sg);
         ImGui::End();
 
-        ShaderEditor(sg, texMap);
         // IMGUI Rendering
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -147,12 +142,6 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
 void Chapter1::start()
 {
     globalScene = &scene;
-
-    setupTextures(texture);
-
-    texMap["myTexture"] = texture[0];
-    texMap["rayTrace"] = texture[1];
-    texMap["sky"] = texture[2];
 
     // 
     // set up the perspective projection for the camera and the light
@@ -171,28 +160,17 @@ void Chapter1::start()
     {   // declare and intialize our base shader and materials
         new Shader("data/vertex.glsl", "data/fragment.glsl", "base");
 
-        new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
         new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.80, 0.80, 0.0, 1.0));
-        new Material(Shader::shaders["base"], "blue", -1, glm::vec4(0.10, 0.10, 0.9, 1.0));
         new Material(Shader::shaders["base"], "red", -1, glm::vec4(0.90, 0.10, 0.1, 1.0));
     }
-
-    {   // declare and intialize skybox shader and background material
-        new Shader("data/vSky.glsl", "data/fSky.glsl", "SkyBox");
-        new Material(Shader::shaders["SkyBox"], "background", texMap["sky"], glm::vec4(-1.0));
-    }
-    // skybox is special and doesn't belong to the SceneGraph
-    mySky = new SkyboxModel(Material::materials["background"], glm::mat4(1.0f)); // our "skybox"
 
     //
     // OK, now to the scene stuff...
     // 
+    triangle = new TriangleModel(Material::materials["red"], glm::mat4(1.0)); // our first triangle
 
-    scene.addRenderer(new SphereModel(Material::materials["blue"], glm::translate(glm::mat4(0.5f), glm::vec3(2.0f, 0.0f, 0.0f))));
-    scene.addRenderer(cube = new CubeModel(Material::materials["green"], glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f))));
-    
-    glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>() / 2.0f, glm::vec3(-1, 0, 0));
-    scene.addRenderer(new QuadModel(Material::materials["red"], floorXF)); // our floor quad
+    // if you plan on rendering it as part of a scene, add it to the scene hierarchy
+    //scene.addRenderer(triangle);
 }
 
 void Chapter1::update(double deltaTime) {
@@ -204,20 +182,19 @@ void Chapter1::update(double deltaTime) {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glDisable(GL_DEPTH_TEST);
-        mySky->render(glm::mat4(glm::mat3(glm::lookAt(scene.camera.position, scene.camera.target, scene.camera.up))), scene.camera.projection(), deltaTime, &scene);
-
-        glEnable(GL_DEPTH_TEST);
+        // draw the triangle directly, no camera, no perspective
+        triangle->render(glm::mat4(1.0), glm::mat4(1.0), deltaTime, &scene);
 
         // render from the cameras position and perspective 
-        scene.renderFrom(scene.camera, deltaTime);
+        //scene.renderFrom(scene.camera, deltaTime);
     }
     // draw imGui over the top
-    drawMyGUI(&scene, cube);
+    drawMyGUI(&scene, 0L);
 }
 
 void Chapter1::end() {
-    deleteTextures(texture);
+
+    // housekeeping, remove all the shaders, materials and renderers created
 
     static std::map<std::string, Shader*> sTemp = Shader::shaders;
 

@@ -155,14 +155,14 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
 
             ImGui::End();
 
-            ShaderEditor(sg, texMap);
+            ShaderEditor(sg);
             // IMGUI Rendering
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
 }
 
-void ShaderEditor(SceneGraph* sg, std::map<std::string, unsigned int> texMap) {
+void ShaderEditor(SceneGraph* sg) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
             ImGui::Begin("Shader Editor");  // Create a window and append into it.
@@ -230,4 +230,3 @@ void ShaderEditor(SceneGraph* sg, std::map<std::string, unsigned int> texMap) {
 
         }
 }
-
