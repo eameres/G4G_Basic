@@ -246,7 +246,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl"); // declare and intialize our shader
+    Shader ourShader("data/vertex.glsl", "data/fragment.glsl"); // declare and intialize our shader
 
     myTexture();
     setupTextures();

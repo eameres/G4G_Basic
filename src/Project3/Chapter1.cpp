@@ -152,14 +152,14 @@ static void quadCube() {
     floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, -0.27f)), glm::vec3(0.5)), -glm::pi<float>(), glm::vec3(-1, 0, 0));
     scene.addRenderer(new QuadModel(Material::materials["green"], floorXF)); // back quad
 
-
+    
     floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.27f, .0f, 0.0f)), glm::vec3(0.5f)), glm::pi<float>() / 2.0f, glm::vec3(0, 1, 0));
     scene.addRenderer(new QuadModel(Material::materials["green"], floorXF)); // right quad
 
     floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(-0.27f, .0f, 0.0f)), glm::vec3(0.5)), -glm::pi<float>() / 2.0f, glm::vec3(0, 1, 0));
     scene.addRenderer(new QuadModel(Material::materials["green"], floorXF)); // left quad
 
-
+    
     floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, .27f, 0.0f)), glm::vec3(0.5f)), glm::pi<float>() / 2.0f, glm::vec3(-1, 0, 0));
     scene.addRenderer(new QuadModel(Material::materials["green"], floorXF)); // top quad
 
@@ -191,7 +191,7 @@ void Chapter1::start()
     //  the maps are only used during setup and teardown, and not within the main loop, so efficiency isn't an issue
 
     {   // declare and intialize our base shader and materials
-        new Shader("data/vertex.lgsl", "data/fragment.lgsl", "base");
+        new Shader("data/vertex.glsl", "data/fragment.glsl", "base");
 
         new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
         new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.80, 0.80, 0.0, 1.0));
@@ -199,7 +199,7 @@ void Chapter1::start()
     }
 
     {   // declare and intialize skybox shader and background material
-        new Shader("data/vSky.lgsl", "data/fSky.lgsl", "SkyBox");
+        new Shader("data/vSky.glsl", "data/fSky.glsl", "SkyBox");
         new Material(Shader::shaders["SkyBox"], "background", texMap["sky"], glm::vec4(-1.0));
     }
     // skybox is special and doesn't belong to the SceneGraph

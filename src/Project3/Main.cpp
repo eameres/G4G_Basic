@@ -36,7 +36,7 @@
 
 #include "Chapter0.h" // START HERE!  you'll find the start, update, end and callback
 
-Chapter1 myDemo;
+Chapter2 myDemo;
 
 // settings
 unsigned int scrn_width = 1280;

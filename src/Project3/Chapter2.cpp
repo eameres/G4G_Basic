@@ -59,12 +59,12 @@ void cubeOfCubes(SceneGraph* sg)
 void setupShadersAndMaterials(std::map<std::string, unsigned int> texMap)
 {
     {   // declare and intialize shader with colored vertices
-        new Shader("data/vertColors.lgsl", "data/fragColors.lgsl", "colored");
+        new Shader("data/vertColors.glsl", "data/fragColors.glsl", "colored");
 
         new Material(Shader::shaders["colored"], "coloredVerts", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     }
     {   // declare and intialize shader with texture(s)
-        new Shader("data/vertTexture.lgsl", "data/fragTexture.lgsl", "textured");
+        new Shader("data/vertTexture.glsl", "data/fragTexture.glsl", "textured");
 
         new Material(Shader::shaders["textured"], "shuttle", texMap["shuttle"], texMap["sky"]);
         new Material(Shader::shaders["textured"], "checkers", texMap["myTexture"], texMap["sky"]);
@@ -73,7 +73,7 @@ void setupShadersAndMaterials(std::map<std::string, unsigned int> texMap)
         new Material(Shader::shaders["textured"], "brick", texMap["brick"], texMap["sky"]);
     }
     {
-        new Shader("data/vParticle.lgsl", "data/fParticle.lgsl", "Particle"); // declare and intialize skybox shader
+        new Shader("data/vParticle.glsl", "data/fParticle.glsl", "Particle"); // declare and intialize skybox shader
         new Material(Shader::shaders["Particle"], "pMaterial", -1, glm::vec4(1.0, 0.0, 0.0, 1.0));
     }
 }
@@ -180,25 +180,25 @@ void Chapter2::start()
     //  the maps are only used during setup and teardown, and not within the main loop, so efficiency isn't an issue
 
     {   // declare and intialize our base shader and materials
-        new Shader("data/vertex.lgsl", "data/fragment.lgsl", "base");
+        new Shader("data/vertex.glsl", "data/fragment.glsl", "base");
 
         new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
         new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.80, 0.80, 0.0, 1.0));
     }
     {   // declare and intialize skybox shader and background material
-        new Shader("data/vSky.lgsl", "data/fSky.lgsl", "SkyBox");
+        new Shader("data/vSky.glsl", "data/fSky.glsl", "SkyBox");
         new Material(Shader::shaders["SkyBox"], "background", texMap["sky"], glm::vec4(-1.0));
     }
     {
-        new Shader("data/vDepth.lgsl", "data/fDepth.lgsl", "Depth");
+        new Shader("data/vDepth.glsl", "data/fDepth.glsl", "Depth");
         new Material(Shader::shaders["Depth"], "depthMaterial", -1, glm::vec4(1.0, 1.0, 0.0, 1.0));
     }
     {
-        new Shader("data/vPost.lgsl", "data/fPost.lgsl", "PostProcessing");
+        new Shader("data/vPost.glsl", "data/fPost.glsl", "PostProcessing");
         new Material(Shader::shaders["PostProcessing"], "offScreenMaterial", texMap["offScreen"], glm::vec4(1.0, 1.0, 0.0, 1.0));
     }
     {   // declare and intialize shader with ADS lighting
-        new Shader("data/vFlatLit.lgsl", "data/fFlatLit.lgsl", "PhongShadowed");
+        new Shader("data/vFlatLit.glsl", "data/fFlatLit.glsl", "PhongShadowed");
         new Material(Shader::shaders["PhongShadowed"], "litMaterial", texMap["myTexture"], texMap["depth"], true);
     }
 
