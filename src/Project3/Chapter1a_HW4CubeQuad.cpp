@@ -48,23 +48,22 @@ static SceneGraph* globalScene;
 static unsigned int texture[] = { 0,1,2,3 };
 
 static SkyboxModel* mySky;
-static Renderer* cube;
 
-static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
+static void drawMyGUI(SceneGraph* sg, const char * name) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
     {
         // used to get values from imGui to the model matrix
         static float axis[] = { 0.0f,0.0f,1.0f };
         static float angle = 0.0f;
 
-        static float transVec[] = { -2.0f,0.0f,0.0f };
+        static float transVec[] = { 0.0f,0.0f,0.0f };
         static float scaleVec[] = { 1.0f,1.0f,1.0f };
 
         // used to get values from imGui to the camera (view) matrix
         static float v_axis[] = { 0.0f,1.0f,0.0f };
         static float v_angle = 0.0f;
 
-        static float v_transVec[] = { 0.0f,0.0f,3.0f };
+        static float v_transVec[] = { 1.0f,1.0f,1.0f };
         static float camTarget[] = { 0.0f,0.0f,0.0f };
         float camClip[] = { 1.0f,1000.0f };
         float camFOV, camAspect;
@@ -76,8 +75,8 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-
-        ImGui::Begin("Graphics For Games Chapter 1");  // Create a window and append into it.
+        
+        ImGui::Begin(name);  // Create a window and append into it.
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
@@ -92,23 +91,22 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
         else
             sg->time = baseTime = glfwGetTime();
 
-        ImGui::Text("Model Matrix");
-        // values we'll use to derive a model matrix
-        ImGui::DragFloat3("Translate", transVec, .01f, -3.0f, 3.0f);
-        ImGui::InputFloat3("Axis", axis, "%.2f");
-        ImGui::SliderAngle("Angle", &angle, -90.0f, 90.0f);
-        ImGui::DragFloat3("Scale", scaleVec, .01f, -3.0f, 3.0f);
+        {
+            ImGui::Text("Scene Root Matrix (ground + cube)");
+            // values we'll use to derive a model matrix
+            ImGui::DragFloat3("Translate", transVec, .01f, -3.0f, 3.0f);
+            ImGui::InputFloat3("Axis", axis, "%.2f");
+            ImGui::SliderAngle("Angle", &angle, -90.0f, 90.0f);
+            ImGui::DragFloat3("Scale", scaleVec, .01f, -3.0f, 3.0f);
 
-        if (myRenderer != NULL) {
-            // factor in the results of imgui tweaks for the next round...
-            myRenderer->setXForm(glm::mat4(1.0f));
-            myRenderer->translate(transVec);
-            myRenderer->rotate(axis, angle);
-            myRenderer->scale(scaleVec);
+            glm::mat4 sceneXForm = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(transVec[0], transVec[1], transVec[2])), glm::vec3(scaleVec[0],scaleVec[1],scaleVec[2])), angle, glm::vec3(axis[0],axis[1], axis[2]));
+
+            sg->setXform(sceneXForm);
         }
         ImGui::Text("Camera Matrix");
+
         ImGui::SameLine(); ImGui::Checkbox("AutoPan", &autoPan);
-        // values we'll use to derive a model matrix
+        // values we'll use to derive a camera view matrix
         ImGui::DragFloat3("vTranslate", v_transVec, .1f, -100.0f, 100.0f);
         ImGui::InputFloat3("vAxis", v_axis, "%.2f");
         ImGui::DragFloat3("camTarget", camTarget, .1f, -100.0f, 100.0f);
@@ -144,7 +142,29 @@ static void drawMyGUI(SceneGraph* sg,Renderer *myRenderer) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
 }
-void Chapter1::start()
+static void quadCube() {
+
+    glm::mat4 floorXF = glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.27f)), glm::vec3(0.5));
+    scene.addRenderer(new QuadModel(Material::materials["green"], floorXF)); //front quad
+
+    floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, -0.27f)), glm::vec3(0.5)), -glm::pi<float>(), glm::vec3(-1, 0, 0));
+    scene.addRenderer(new QuadModel(Material::materials["green"], floorXF)); // back quad
+
+    
+    floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.27f, .0f, 0.0f)), glm::vec3(0.5f)), glm::pi<float>() / 2.0f, glm::vec3(0, 1, 0));
+    scene.addRenderer(new QuadModel(Material::materials["blue"], floorXF)); // right quad
+
+    floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(-0.27f, .0f, 0.0f)), glm::vec3(0.5)), -glm::pi<float>() / 2.0f, glm::vec3(0, 1, 0));
+    scene.addRenderer(new QuadModel(Material::materials["blue"], floorXF)); // left quad
+
+    
+    floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, .27f, 0.0f)), glm::vec3(0.5f)), glm::pi<float>() / 2.0f, glm::vec3(-1, 0, 0));
+    scene.addRenderer(new QuadModel(Material::materials["red"], floorXF)); // top quad
+
+    floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -0.27f, 0.0f)), glm::vec3(0.5)), -glm::pi<float>() / 2.0f, glm::vec3(-1, 0, 0));
+    scene.addRenderer(new QuadModel(Material::materials["red"], floorXF)); // bottom quad
+}
+void Chapter1a::start()
 {
     globalScene = &scene;
 
@@ -171,10 +191,10 @@ void Chapter1::start()
     {   // declare and intialize our base shader and materials
         new Shader("data/vertex.glsl", "data/fragment.glsl", "base");
 
-        new Material(Shader::shaders["base"], "white", -1, glm::vec4(1.0, 1.0, 1.0, 1.0));
-        new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.80, 0.80, 0.0, 1.0));
-        new Material(Shader::shaders["base"], "blue", -1, glm::vec4(0.10, 0.10, 0.9, 1.0));
-        new Material(Shader::shaders["base"], "red", -1, glm::vec4(0.90, 0.10, 0.1, 1.0));
+        new Material(Shader::shaders["base"], "green", -1, glm::vec4(0.10, 0.80, 0.1, 1.0));
+        new Material(Shader::shaders["base"], "blue", -1, glm::vec4(0.10, 0.10, 0.8, 1.0));
+        new Material(Shader::shaders["base"], "red", -1, glm::vec4(0.80, 0.10, 0.1, 1.0));
+        new Material(Shader::shaders["base"], "yellow", -1, glm::vec4(1.0, 0.90, 0.0, 1.0));
     }
 
     {   // declare and intialize skybox shader and background material
@@ -186,16 +206,14 @@ void Chapter1::start()
 
     //
     // OK, now to the scene stuff...
-    // 
-
-    scene.addRenderer(new SphereModel(Material::materials["blue"], glm::translate(glm::mat4(0.5f), glm::vec3(2.0f, 0.0f, 0.0f))));
-    scene.addRenderer(cube = new CubeModel(Material::materials["green"], glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f))));
-    
+    //     
     glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>() / 2.0f, glm::vec3(-1, 0, 0));
-    scene.addRenderer(new QuadModel(Material::materials["red"], floorXF)); // our floor quad
+    scene.addRenderer(new QuadModel(Material::materials["yellow"], floorXF)); // our floor quad
+
+    quadCube();
 }
 
-void Chapter1::update(double deltaTime) {
+void Chapter1a::update(double deltaTime) {
     {
         // do the "normal" drawing
         glViewport(0, 0, scrn_width, scrn_height);
@@ -213,10 +231,10 @@ void Chapter1::update(double deltaTime) {
         scene.renderFrom(scene.camera, deltaTime);
     }
     // draw imGui over the top
-    drawMyGUI(&scene, cube);
+    drawMyGUI(&scene, name);
 }
 
-void Chapter1::end() {
+void Chapter1a::end() {
     deleteTextures(texture);
 
     static std::map<std::string, Shader*> sTemp = Shader::shaders;
@@ -237,7 +255,7 @@ void Chapter1::end() {
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
-void Chapter1::callback(GLFWwindow* window, int width, int height)
+void Chapter1a::callback(GLFWwindow* window, int width, int height)
 {
    globalScene->camera.setAspect((float)width / (float)height);
 }
