@@ -39,15 +39,15 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glm::vec3 cameraLoc = sg->camera.position;
 
     shaderID =  myMaterial->use(sg->renderPass);
-    
-    mvp = pMat * vMat * modelMatrix;
+
+    glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
 
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
-    glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
-
+    // because it is only once per model, another approach might be just to pre-multiply model, view and perspective 
+    mvp = pMat * vMat * modelMatrix;
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
     glUniform3fv(glGetUniformLocation(shaderID, "cPos"), 1, glm::value_ptr(cameraLoc));

@@ -15,7 +15,6 @@ uniform mat4 lightSpaceMatrix;
 out vec3 FragPos;
 out vec3 Normal;
 out vec4 varyingColor;
-out vec3 d1;
 
 out VS_OUT{
 	vec3 FragPos;
@@ -26,24 +25,16 @@ out VS_OUT{
 
 void main()
 {
-	vs_out.FragPos = vec3(v*m * vec4(aPos, 1.0));
-    vs_out.Normal = transpose(inverse(mat3(v*m))) * aNormal;
-    //vs_out.TexCoords = aTexCoords;
-    vs_out.FragPosLightSpace = lightSpaceMatrix * v*m*vec4(aPos, 1.0);
-    
-	varyingColor = vec4(aCol,1.0);
-
-	
-	if (gl_VertexID % 3 == 0)
-		d1 = vec3(1,0,0);
-	else if (gl_VertexID %3 == 1)
-		d1 = vec3(0,1,0);
-	else if (gl_VertexID %3 == 2)
-		d1 = vec3(0,0,1);
 
     FragPos = vec3(v*m * vec4( aPos, 1.0)  );
-    //FragPos = vec3(m * (vec4( aPos + (aNormal*sin(myTime)/5.0), 1.0) ) );
-    Normal = mat3(transpose(inverse(v*m))) * aNormal;  
+    Normal = transpose(inverse(mat3(v*m))) * aNormal;  
+
+    vs_out.FragPos = FragPos;
+    vs_out.Normal = Normal;
+    vs_out.FragPosLightSpace = lightSpaceMatrix * v*m*vec4(aPos, 1.0);
+    
+    varyingColor = vec4(aCol,1.0);
+
     
     gl_Position = p * v * m * vec4(aPos, 1.0);
 }

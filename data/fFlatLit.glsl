@@ -4,7 +4,6 @@ out vec4 FragColor;
 in vec3 Normal;  
 in vec3 FragPos; 
 in vec4 varyingColor;
-in vec3 d1;
 
 in VS_OUT {
     vec3 FragPos;
@@ -97,10 +96,10 @@ void main()
     	vec3 viewDir = normalize(cPos - FragPos);
     	vec3 reflectDir = reflect(-lightDir, norm);  
 
-		vec3 halfwayDir = normalize(lightDir + viewDir);
+  	vec3 halfwayDir = normalize(lightDir + viewDir);
 
-    	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-		spec = pow(max(dot(norm, halfwayDir), 0.0), 64);
+    	float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32); //Phong
+		spec = pow(max(dot(norm, halfwayDir), 0.0), 64); // Blinn-Phong
 		specular = specularStrength * spec * lightColor; 
     }
 	// calculate shadow
@@ -108,7 +107,5 @@ void main()
 	//shadow = 0.0; 
     vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * varyingColor.xyz;
     
-	//if ((d1.r <  0.05) || (d1.g < .05) || (d1.b < .05))
-	//	result = d1;
     FragColor = vec4(result,1.0);
 } 
