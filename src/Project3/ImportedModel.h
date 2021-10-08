@@ -1,5 +1,7 @@
 #include <vector>
 
+struct objMesh;
+
 class ImportedModel
 {
 private:
@@ -25,6 +27,7 @@ private:
 	std::vector<float> stVals;
 	std::vector<float> normals;
 	std::vector<float> normVals;
+	std::vector<objMesh> meshes;
 public:
 	ModelImporter();
 	void parseOBJ(const char *filePath);
@@ -32,4 +35,5 @@ public:
 	std::vector<float> getVertices();
 	std::vector<float> getTextureCoordinates();
 	std::vector<float> getNormals();
+	std::vector<objMesh> getMeshes();
 };

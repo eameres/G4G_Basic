@@ -73,6 +73,9 @@ ObjModel::ObjModel(const char* filePath, Material* material, glm::mat4 m)
         indices.push_back(i);
     }
 
+    for (objMesh temp : modelImporter.getMeshes())
+        meshes.push_back(temp);
+
     indexCount = indices.size();
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
@@ -100,6 +103,61 @@ ObjModel::ObjModel(const char* filePath, Material* material, glm::mat4 m)
     glBindVertexArray(0);
 };
 
+void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, SceneGraph* sg) {
+
+    glm::mat4 mvp;
+    unsigned int shaderID;
+
+    if (!enabled) return;
+
+    //assert(myMaterial != NULL);
+
+    if (myMaterial == NULL)
+        myMaterial = Material::materials["green"];
+
+    glm::vec3 lightLoc = sg->light.position;
+    glm::vec3 cameraLoc = sg->camera.position;
+
+    shaderID = myMaterial->use(sg->renderPass);
+
+    glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
+
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "v"), 1, GL_FALSE, glm::value_ptr(treeMat));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(vpMat));
+
+    // because it is only once per model, another approach might be just to pre-multiply model, view and perspective 
+    mvp = vpMat * treeMat * modelMatrix;
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+    glUniform3fv(glGetUniformLocation(shaderID, "cPos"), 1, glm::value_ptr(cameraLoc));
+    glUniform3fv(glGetUniformLocation(shaderID, "lPos"), 1, glm::value_ptr(lightLoc));
+
+    glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
+
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightViewProjection));
+
+    glBindVertexArray(VAO);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
+
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    if (meshes.size() == 0) {
+        glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0, instances);
+    } else {
+        for (int i = 0; i < meshes.size() - 1; i++) {
+            float foo = meshes[i + 1].startingVert % 200;
+            glm::vec4 ourColor = glm::vec4(foo / 200.0f, foo / 200.0f, foo / 200.0f, 1.0f);
+            glUniform4fv(glGetUniformLocation(shaderID, "ourColor"), 1, glm::value_ptr(ourColor));
+            glDrawElementsInstanced(GL_TRIANGLES, meshes[i + 1].startingVert - meshes[i].startingVert, GL_UNSIGNED_INT, (void*)(meshes[i].startingVert * sizeof(unsigned int)), instances);
+        }
+        glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
+    }
+}
+
 void ModelImporter::parseOBJ(const char* filePath) {
     float x, y, z;
     string content;
@@ -107,6 +165,17 @@ void ModelImporter::parseOBJ(const char* filePath) {
     string line = "";
     while (!fileStream.eof()) {
         getline(fileStream, line);
+        if (line.compare(0, 2, "us") == 0) {
+            objMesh temp;
+            string action;
+            std::istringstream some_stream(line);
+            some_stream >> action >> temp.myName;
+
+            std::cout << action << " " << temp.myName << " " << triangleVerts.size() <<  "\n";
+            temp.startingVert = triangleVerts.size();
+            meshes.push_back(temp);
+
+        }
         if (line.compare(0, 2, "v ") == 0) {
             stringstream ss(line.erase(0, 1));
             ss >> x; ss >> y; ss >> z;
@@ -237,3 +306,4 @@ int ModelImporter::getNumVertices() { return (triangleVerts.size() / 3); }
 std::vector<float> ModelImporter::getVertices() { return triangleVerts; }
 std::vector<float> ModelImporter::getTextureCoordinates() { return textureCoords; }
 std::vector<float> ModelImporter::getNormals() { return normals; }
+std::vector<objMesh> ModelImporter::getMeshes() { return meshes; }

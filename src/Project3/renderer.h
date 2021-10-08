@@ -71,9 +71,16 @@ public:
 
 };
 
+struct objMesh {
+    std::string myName;
+    int startingVert;
+};
+
 class ObjModel : public Renderer {
 public:
+    std::vector<objMesh> meshes;
     ObjModel(const char* filePath, Material*, glm::mat4 m);
+    void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph* sg);
 };
 
 class TorusModel : public Renderer {

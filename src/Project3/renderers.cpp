@@ -22,8 +22,18 @@ std::map<std::string, Shader*> Shader::shaders;
 
 std::vector<Renderer*> Renderer::renderList;
 
-void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg)
+void Renderer::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, SceneGraph *sg)
 { // here's where the "actual drawing" gets done
+
+    /* you may be wondering what happened to the view and projection matrices...
+    *
+    * because of the tree hierarchy, we put the inherited "tree" transform in the view
+    * and combined the projection and view into a  vpMat
+    * in most cases this is invisible, but it helps with lighting since we need to keep the 
+    * model transformations separate from the view space so that lighting calculations can happen 
+    * BEFORE we transform the model into view (and projection) space.
+    * 
+    * */
 
     glm::mat4 mvp;
     unsigned int shaderID;
@@ -43,11 +53,11 @@ void Renderer::render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGra
     glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
 
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shaderID, "v"), 1, GL_FALSE, glm::value_ptr(vMat));
-    glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "v"), 1, GL_FALSE, glm::value_ptr(treeMat));
+    glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(vpMat));
 
     // because it is only once per model, another approach might be just to pre-multiply model, view and perspective 
-    mvp = pMat * vMat * modelMatrix;
+    mvp = vpMat * treeMat * modelMatrix;
     glUniformMatrix4fv(glGetUniformLocation(shaderID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
 
     glUniform3fv(glGetUniformLocation(shaderID, "cPos"), 1, glm::value_ptr(cameraLoc));
