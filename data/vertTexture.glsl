@@ -19,6 +19,13 @@ uniform mat4 lightSpaceMatrix;
 out vec3 FragPos;
 out vec3 Normal;
 
+out VS_OUT{
+	vec3 FragPos;
+	vec3 Normal;
+	vec2 TexCoords;
+	vec4 FragPosLightSpace;
+} vs_out;
+
 void main()
 {
 	vec3 aPos1 = aPos ;//+ (aNorm*abs(sin(myTime))*20);
@@ -28,6 +35,10 @@ void main()
     FragPos = vec3(v*m*vec4(aPos1, 1.0));
     Normal = normalize(mat3(transpose(inverse(v*m))) * normalize(aNorm)); 
 	r = reflect((FragPos-cPos),Normal);
+
+    vs_out.FragPos = FragPos;
+    vs_out.Normal = Normal;
+    vs_out.FragPosLightSpace = lightSpaceMatrix * v*m*vec4(aPos, 1.0);
 
     gl_Position = p*v*m*vec4(aPos1, 1.0);
     

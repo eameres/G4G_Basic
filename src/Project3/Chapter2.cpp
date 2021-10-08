@@ -93,6 +93,7 @@ void setupScene(SceneGraph* scene, treeNode** nodes)
     //scene->addRenderer(frontQuad = new QuadModel(Material::materials["brick"], floorXF)); // our floor quad
 
     scene->addRenderer(new ObjModel("data/Sponza-master/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    //scene->addRenderer(new ObjModel("data/fireplace/fireplace_room.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     scene->addRenderer(new ObjModel("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
 
     nodes[2] = scene->addChild(glm::mat4(1));
@@ -168,7 +169,7 @@ void Chapter2::start()
     scene.camera.position = glm::vec4(0, 0, -5, 1.0f);
     scene.camera.target = glm::vec4(0, 0, 0, 1.0f);
 
-    scene.light.setOrtho(-3.0f, 3.0f, -3.0f, 3.0f, 1.0f, 7.5f);
+    scene.light.setOrtho(-5.0f, 5.0f, -5.0f, 5.0f, 1.0f, 50.0f);
     scene.light.position = glm::vec4(-4.0f, 2.0f, 0.0f, 1.0f);
 
 

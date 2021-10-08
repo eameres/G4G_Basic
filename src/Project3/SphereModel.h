@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "Material.h"
+#include "Renderer.h"
 
 class SphereModel : public Renderer {
 public:

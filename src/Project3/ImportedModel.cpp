@@ -221,7 +221,7 @@ void ModelImporter::parseMTL(const char* filePath) {
             else {
                 std::istringstream some_stream(line);
                 some_stream >> attrib >> val;
-                if (attrib == "map_Ka") {
+                if (attrib == "map_Kd") {
                     texName = val;
                     string tName = "data/Sponza-master/" + val;
                     tNum = loadTexture(tName.c_str());
@@ -247,7 +247,7 @@ void ModelImporter::parseOBJ(const char* filePath) {
             some_stream >> action >> temp.myName;
 
             std::cout << action << " " << temp.myName << " " << triangleVerts.size() <<  "\n";
-            temp.startingVert = triangleVerts.size()/3; // number of vertices, not number of coordinates!
+            temp.startingVert = triangleVerts.size()/3; // number of vertices (coordinate triples), not the individual float count!!
             meshes.push_back(temp);
 
         }
