@@ -149,8 +149,12 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
         glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0, instances);
     } else {
         for (int i = 0; i < meshes.size() - 1; i++) {
+        //for (int i = 0; i < 1; i++) {
 
             unsigned int shaderID;
+
+            //if (meshes[i].myName != "leaf")
+            //c    continue;
 
             shaderID = Material::materials[meshes[i].myName]->use(sg->renderPass);
 
@@ -184,32 +188,53 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
+            //std::cout << meshes[i + 1].startingVert - meshes[i].startingVert << " starting at " << (meshes[i].startingVert * sizeof(unsigned int)) << "\n";
 
             glDrawElementsInstanced(GL_TRIANGLES, meshes[i + 1].startingVert - meshes[i].startingVert, GL_UNSIGNED_INT, (void*)(meshes[i].startingVert * sizeof(unsigned int)), instances);
         }
-        glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
+        //glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
     }
 }
+
+#include "textures.h"
+
 void ModelImporter::parseMTL(const char* filePath) {
     int count = 0;
     ifstream fileStream(filePath, ios::in);
     string line = "";
+    bool activeMtl = false;
+    string newmtl, mtlName;
+    string attrib,val,texName;
+    unsigned int tNum = 0;
+
     if (fileStream.good()) {
         while (!fileStream.eof()) {
             getline(fileStream, line);
-            if (line.compare(0, 6, "newmtl") == 0) {
-                string newmtl, mtlName;
+            if (line.compare(0, 6, "newmtl") == 0){
+                if (activeMtl) {
+                    //new Material(Shader::shaders["PhongShadowed"], mtlName, -1, glm::vec4(((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), 1.0));
+                    new Material(Shader::shaders["textured"], mtlName, tNum, 0);
+                }
                 std::istringstream some_stream(line);
                 some_stream >> newmtl >> mtlName;
-                new Material(Shader::shaders["PhongShadowed"], mtlName, -1, glm::vec4(((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), 1.0));
-                //new Material(Shader::shaders["textured"], mtlName, 7+(count++ % 3), 0);
+                activeMtl = true;
+            }
+            else {
+                std::istringstream some_stream(line);
+                some_stream >> attrib >> val;
+                if (attrib == "map_Ka") {
+                    texName = val;
+                    string tName = "data/Sponza-master/" + val;
+                    tNum = loadTexture(tName.c_str());
+                }
             }
         }
+        new Material(Shader::shaders["textured"], mtlName, tNum, 0);
     }
 }
 
 void ModelImporter::parseOBJ(const char* filePath) {
-    parseMTL("data/sponzaCrytek/sponza.mtl");
+    parseMTL("data/Sponza-master/sponza.mtl");
     float x, y, z;
     string content;
     ifstream fileStream(filePath, ios::in);
@@ -223,7 +248,7 @@ void ModelImporter::parseOBJ(const char* filePath) {
             some_stream >> action >> temp.myName;
 
             std::cout << action << " " << temp.myName << " " << triangleVerts.size() <<  "\n";
-            temp.startingVert = triangleVerts.size();
+            temp.startingVert = triangleVerts.size()/3;
             meshes.push_back(temp);
 
         }
