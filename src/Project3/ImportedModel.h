@@ -30,7 +30,8 @@ private:
 	std::vector<objMesh> meshes;
 public:
 	ModelImporter();
-	void parseOBJ(const char *filePath);
+	void parseOBJ(const char* filePath);
+	void parseMTL(const char* filePath);
 	int getNumVertices();
 	std::vector<float> getVertices();
 	std::vector<float> getTextureCoordinates();

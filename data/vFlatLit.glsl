@@ -33,7 +33,7 @@ void main()
     vs_out.Normal = Normal;
     vs_out.FragPosLightSpace = lightSpaceMatrix * v*m*vec4(aPos, 1.0);
     
-    varyingColor = vec4(aCol,1.0);
+    varyingColor = mix(vec4(aCol,1.0),ourColor,.5);
 
     
     gl_Position = p * v * m * vec4(aPos, 1.0);

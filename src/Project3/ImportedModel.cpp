@@ -149,16 +149,67 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
         glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0, instances);
     } else {
         for (int i = 0; i < meshes.size() - 1; i++) {
-            float foo = meshes[i + 1].startingVert % 200;
-            glm::vec4 ourColor = glm::vec4(foo / 200.0f, foo / 200.0f, foo / 200.0f, 1.0f);
-            glUniform4fv(glGetUniformLocation(shaderID, "ourColor"), 1, glm::value_ptr(ourColor));
+
+            unsigned int shaderID;
+
+            shaderID = Material::materials[meshes[i].myName]->use(sg->renderPass);
+
+            glm::mat4 mvp;
+
+            if (!enabled) return;
+
+
+            glm::vec3 lightLoc = sg->light.position;
+            glm::vec3 cameraLoc = sg->camera.position;
+
+            glUniform1f(glGetUniformLocation(shaderID, "myTime"), elapsedTime += (float)deltaTime);
+
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "m"), 1, GL_FALSE, glm::value_ptr(modelMatrix));
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "v"), 1, GL_FALSE, glm::value_ptr(treeMat));
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "p"), 1, GL_FALSE, glm::value_ptr(vpMat));
+
+            // because it is only once per model, another approach might be just to pre-multiply model, view and perspective 
+            mvp = vpMat * treeMat * modelMatrix;
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+            glUniform3fv(glGetUniformLocation(shaderID, "cPos"), 1, glm::value_ptr(cameraLoc));
+            glUniform3fv(glGetUniformLocation(shaderID, "lPos"), 1, glm::value_ptr(lightLoc));
+
+            glm::mat4 lightViewProjection = sg->light.projection() * glm::lookAt(sg->light.position, sg->light.target, sg->light.up);
+
+            glUniformMatrix4fv(glGetUniformLocation(shaderID, "lightSpaceMatrix"), 1, GL_FALSE, glm::value_ptr(lightViewProjection));
+
+            glBindVertexArray(VAO);
+
+            glEnable(GL_CULL_FACE);
+            glCullFace(GL_BACK);
+            glFrontFace(GL_CCW);
+
             glDrawElementsInstanced(GL_TRIANGLES, meshes[i + 1].startingVert - meshes[i].startingVert, GL_UNSIGNED_INT, (void*)(meshes[i].startingVert * sizeof(unsigned int)), instances);
         }
         glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
     }
 }
+void ModelImporter::parseMTL(const char* filePath) {
+    int count = 0;
+    ifstream fileStream(filePath, ios::in);
+    string line = "";
+    if (fileStream.good()) {
+        while (!fileStream.eof()) {
+            getline(fileStream, line);
+            if (line.compare(0, 6, "newmtl") == 0) {
+                string newmtl, mtlName;
+                std::istringstream some_stream(line);
+                some_stream >> newmtl >> mtlName;
+                new Material(Shader::shaders["PhongShadowed"], mtlName, -1, glm::vec4(((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), 1.0));
+                //new Material(Shader::shaders["textured"], mtlName, 7+(count++ % 3), 0);
+            }
+        }
+    }
+}
 
 void ModelImporter::parseOBJ(const char* filePath) {
+    parseMTL("data/sponzaCrytek/sponza.mtl");
     float x, y, z;
     string content;
     ifstream fileStream(filePath, ios::in);
