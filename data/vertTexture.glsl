@@ -14,14 +14,19 @@ uniform vec3 cPos;
 out vec2 TexCoord;
 out vec3 r;
 
+uniform mat4 lightSpaceMatrix;
+
+out vec3 FragPos;
+out vec3 Normal;
+
 void main()
 {
 	vec3 aPos1 = aPos ;//+ (aNorm*abs(sin(myTime))*20);
 
 	TexCoord = uv.xy;
 
-    vec3 FragPos = vec3(v*m*vec4(aPos1, 1.0));
-    vec3 Normal = normalize(mat3(transpose(inverse(v*m))) * normalize(aNorm)); 
+    FragPos = vec3(v*m*vec4(aPos1, 1.0));
+    Normal = normalize(mat3(transpose(inverse(v*m))) * normalize(aNorm)); 
 	r = reflect((FragPos-cPos),Normal);
 
     gl_Position = p*v*m*vec4(aPos1, 1.0);

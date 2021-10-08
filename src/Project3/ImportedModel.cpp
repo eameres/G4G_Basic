@@ -192,7 +192,7 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
 
             glDrawElementsInstanced(GL_TRIANGLES, meshes[i + 1].startingVert - meshes[i].startingVert, GL_UNSIGNED_INT, (void*)(meshes[i].startingVert * sizeof(unsigned int)), instances);
         }
-        //glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
+        glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
     }
 }
 
@@ -212,8 +212,7 @@ void ModelImporter::parseMTL(const char* filePath) {
             getline(fileStream, line);
             if (line.compare(0, 6, "newmtl") == 0){
                 if (activeMtl) {
-                    //new Material(Shader::shaders["PhongShadowed"], mtlName, -1, glm::vec4(((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), ((double)rand() / (RAND_MAX)), 1.0));
-                    new Material(Shader::shaders["textured"], mtlName, tNum, 0);
+                    new Material(Shader::shaders["textured"], mtlName, tNum, 3);
                 }
                 std::istringstream some_stream(line);
                 some_stream >> newmtl >> mtlName;
@@ -248,7 +247,7 @@ void ModelImporter::parseOBJ(const char* filePath) {
             some_stream >> action >> temp.myName;
 
             std::cout << action << " " << temp.myName << " " << triangleVerts.size() <<  "\n";
-            temp.startingVert = triangleVerts.size()/3;
+            temp.startingVert = triangleVerts.size()/3; // number of vertices, not number of coordinates!
             meshes.push_back(temp);
 
         }
