@@ -104,5 +104,11 @@ void main()
 	//shadow = 0.0; 
     //vec3 result = (ambient + (1.0 - shadow) * (diffuse + specular)) * varyingColor.xyz;
     
+	float distance    = length(lPos - FragPos);
+	float attenuation = 1.0 / (1.0 + 0.045 * distance + 
+    		    0.0075 * (distance * distance));  
+
+	diffuse *= attenuation;
+
     FragColor = vec4( (1.0 - shadow)*diffuse,1) * texColor;
 }
