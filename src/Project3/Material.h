@@ -78,14 +78,12 @@ public:
         myShader->setInt("OurTexture", 0);
 
         glActiveTexture(GL_TEXTURE1);
-
-        if (shadow) // this is if we're using the shadow (depth) texture, not if we're in the Shadow generating pass
-            glBindTexture(GL_TEXTURE_2D, textures[1]);
-        else
-            glBindTexture(GL_TEXTURE_CUBE_MAP, textures[1]);
-
-        myShader->setInt("EnvTexture", 1);
+        glBindTexture(GL_TEXTURE_2D, textures[1]);
         myShader->setInt("shadowMap", 1);
+        
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, textures[2]);
+        myShader->setInt("EnvTexture", 2);
 
         glUniform1f(glGetUniformLocation(myShader->ID, "shine"), shine);
 

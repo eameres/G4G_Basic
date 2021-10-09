@@ -206,25 +206,37 @@ void ModelImporter::parseMTL(const char* filePath) {
     string newmtl, mtlName;
     string attrib,val,texName;
     unsigned int tNum = 0;
+    bool textured = false;
+    glm::vec4 mtlColor;
 
     if (fileStream.good()) {
         while (!fileStream.eof()) {
             getline(fileStream, line);
             if (line.compare(0, 6, "newmtl") == 0){
                 if (activeMtl) {
-                    new Material(Shader::shaders["textured"], mtlName, tNum, 3);
+                    if (textured)
+                        new Material(Shader::shaders["textured"], mtlName, tNum, 4, true);
+                    else
+                        new Material(Shader::shaders["base"], mtlName, -1, mtlColor);
                 }
                 std::istringstream some_stream(line);
                 some_stream >> newmtl >> mtlName;
                 activeMtl = true;
+                textured = false;
             }
             else {
                 std::istringstream some_stream(line);
-                some_stream >> attrib >> val;
-                if (attrib == "map_Kd") {
+                some_stream >> attrib;
+                if (attrib == "map_Ka") {
+                    some_stream >> val;
                     texName = val;
                     string tName = "data/Sponza-master/" + val;
                     tNum = loadTexture(tName.c_str());
+                    textured = true;
+                }else if (attrib == "Kd") {
+                    float r, g, b;
+                    some_stream >> r >> g >> b;
+                    mtlColor = glm::vec4(r,g,b,1.0);
                 }
             }
         }
