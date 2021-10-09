@@ -153,9 +153,6 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
 
             unsigned int shaderID;
 
-            //if (meshes[i].myName != "leaf")
-            //c    continue;
-
             shaderID = Material::materials[meshes[i].myName]->use(sg->renderPass);
 
             glm::mat4 mvp;
@@ -198,6 +195,24 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
 
 #include "textures.h"
 
+using std::string;
+
+static string getPathName(const string& s) {
+
+   char sep = '/';
+
+#ifdef _WIN32
+   sep = '\\';
+#endif
+
+   size_t i = s.rfind(sep, s.length());
+   if (i != string::npos) {
+      return(s.substr(0, i) + "/");
+   }
+
+   return("");
+}
+
 void ModelImporter::parseMTL(const char* filePath) {
     int count = 0;
     ifstream fileStream(filePath, ios::in);
@@ -227,10 +242,10 @@ void ModelImporter::parseMTL(const char* filePath) {
             else {
                 std::istringstream some_stream(line);
                 some_stream >> attrib;
-                if (attrib == "map_Ka") {
+                if ((attrib == "map_Kd") || (attrib == "map_Ka")){
                     some_stream >> val;
                     texName = val;
-                    string tName = "data/Sponza-master/" + val;
+                    string tName = getPathName(filePath) + val;
                     tNum = loadTexture(tName.c_str());
                     textured = true;
                 }else if (attrib == "Kd") {
@@ -240,18 +255,27 @@ void ModelImporter::parseMTL(const char* filePath) {
                 }
             }
         }
-        new Material(Shader::shaders["textured"], mtlName, tNum, 0);
+        if (textured)
+            new Material(Shader::shaders["textured"], mtlName, tNum, 4, true);
+        else
+            new Material(Shader::shaders["base"], mtlName, -1, mtlColor);
     }
 }
 
 void ModelImporter::parseOBJ(const char* filePath) {
-    parseMTL("data/Sponza-master/sponza.mtl");
     float x, y, z;
     string content;
     ifstream fileStream(filePath, ios::in);
     string line = "";
     while (!fileStream.eof()) {
         getline(fileStream, line);
+        if (line.compare(0, 6, "mtllib") == 0){
+            string attrib,fname;
+            std::istringstream some_stream(line);
+            some_stream >> attrib >> fname;
+            fname = getPathName(filePath) + fname;
+            parseMTL(fname.c_str());
+        }
         if (line.compare(0, 2, "us") == 0) {
             objMesh temp;
             string action;
