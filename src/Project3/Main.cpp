@@ -50,6 +50,10 @@ unsigned int scrn_height = 720;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
+void dragDrop(GLFWwindow* window, int count, const char** paths) {
+    myDemo.dragDrop(window, count, paths);
+}
+
 int main()
 {
 
@@ -87,6 +91,7 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwSetDropCallback(window, dragDrop);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------

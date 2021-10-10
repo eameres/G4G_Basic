@@ -36,6 +36,18 @@
 
 #include "Chapter0.h"
 
+SceneGraph scene;
+SceneGraph* globalScene;
+
+void Chapter2::dragDrop(GLFWwindow* window, int count, const char** paths) {
+    int i;
+
+    while (scene.getRoot() != scene.getCurrentNode())
+        scene.getParent();
+
+    for (i = 0; i < count; i++)
+        scene.addRenderer(new ObjModel(paths[i], Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(1.0f))));
+}
 void cubeOfCubes(SceneGraph* sg)
 {
     for (int i = -1; i < 2; i++)
@@ -92,7 +104,7 @@ void setupScene(SceneGraph* scene, treeNode** nodes)
     //glm::mat4 floorXF = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(10.0f)), glm::pi<float>() / 2.0f, glm::vec3(-1, 0, 0));
     //scene->addRenderer(frontQuad = new QuadModel(Material::materials["brick"], floorXF)); // our floor quad
 
-    scene->addRenderer(new ObjModel("data/Sponza-master/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
+    //scene->addRenderer(new ObjModel("data/Sponza-master/sponza.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     //scene->addRenderer(new ObjModel("data/fireplace/fireplace_room.obj_", Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(.02f))));
     scene->addRenderer(new ObjModel("data/shuttle.obj_", Material::materials["shuttle"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(2.0f))));
 
@@ -137,8 +149,6 @@ const unsigned int SHADOW_HEIGHT = 1024;
 extern unsigned int scrn_width;
 extern unsigned int scrn_height;
 
-SceneGraph scene;
-SceneGraph* globalScene;
 
 unsigned int texture[] = { 0,1,2,3 };
 

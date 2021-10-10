@@ -8,6 +8,7 @@ struct SceneGraph;
 class Renderer {
 public:
     static std::vector<Renderer*> renderList;
+    std::string name;
     int instances = 1;
 
 protected:
@@ -18,6 +19,10 @@ public :
     int indexCount;
     float elapsedTime = 0.0f;
 
+    glm::vec3 _translate;
+    glm::vec3 _scale;
+    glm::vec3 _rotationEuler;
+
     glm::mat4 modelMatrix;
 
     Material* myMaterial = NULL;
@@ -27,6 +32,7 @@ protected:
 
 public:
     Renderer(){
+        name = "name" + std::to_string(renderList.size());
         renderList.push_back(this);
     }
     ~Renderer() {

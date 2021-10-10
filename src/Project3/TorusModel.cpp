@@ -17,6 +17,7 @@
 
 TorusModel::TorusModel(Material* material, glm::mat4 m)
 {
+    Renderer::name = "Torus";
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 

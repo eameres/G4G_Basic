@@ -28,6 +28,7 @@ static const float vertices[33] = {
 
 TriangleModel::TriangleModel(Material* material, glm::mat4 m)
 {
+    Renderer::name = "Triangle";
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 

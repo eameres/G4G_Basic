@@ -30,6 +30,7 @@ static const float vertices[44] = {
 
 QuadModel::QuadModel(Material* material, glm::mat4 m)
 {
+    Renderer::name = "Quad";
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 

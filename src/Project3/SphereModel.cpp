@@ -19,6 +19,7 @@
 
 SphereModel::SphereModel(Material* material, glm::mat4 m)
 {
+    Renderer::name = "Sphere";
     Sphere mySphere;
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;

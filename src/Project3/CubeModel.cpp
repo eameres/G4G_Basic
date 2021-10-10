@@ -64,6 +64,8 @@ static const float vertices[288] = {
 
 CubeModel::CubeModel(Material* material, glm::mat4 m)
 {
+
+    Renderer::name = "Cube";
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
@@ -143,6 +145,7 @@ static const float cubeTexCoords[72] = {
 
 SkyboxModel::SkyboxModel(Material* material, glm::mat4 m)
 {
+    Renderer::name = "Skybox";
     // set up vertex data (and buffer(s)) and configure vertex attributes
     modelMatrix = m;
 
@@ -252,6 +255,7 @@ void iCubeModel::setupIMatrices() {
 iCubeModel::iCubeModel(Material* material, glm::mat4 m)
 {
 
+    Renderer::name = "iCube";
     modelMatrix = m;
     myMaterial = material;
 

@@ -49,6 +49,7 @@ ObjModel::ObjModel(const char* filePath, Material* material, glm::mat4 m)
     glGenBuffers(1, &EBO);
 
     ModelImporter modelImporter = ModelImporter();
+    Renderer::name = filePath;
     modelImporter.parseOBJ(filePath);
 
     std::vector<float> verts = modelImporter.getVertices();
