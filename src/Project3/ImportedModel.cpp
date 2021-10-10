@@ -149,8 +149,7 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
     if (meshes.size() == 0) {
         glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0, instances);
     } else {
-        for (int i = 0; i < meshes.size() - 1; i++) {
-        //for (int i = 0; i < 1; i++) {
+        for (int i = 0; i < meshes.size(); i++) {
 
             unsigned int shaderID;
 
@@ -186,11 +185,14 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
             glEnable(GL_CULL_FACE);
             glCullFace(GL_BACK);
             glFrontFace(GL_CCW);
-            //std::cout << meshes[i + 1].startingVert - meshes[i].startingVert << " starting at " << (meshes[i].startingVert * sizeof(unsigned int)) << "\n";
 
-            glDrawElementsInstanced(GL_TRIANGLES, meshes[i + 1].startingVert - meshes[i].startingVert, GL_UNSIGNED_INT, (void*)(meshes[i].startingVert * sizeof(unsigned int)), instances);
+            unsigned int endingVert = indexCount;
+
+            if ((i+1) < meshes.size())
+                endingVert = meshes[i + 1].startingVert;
+
+            glDrawElementsInstanced(GL_TRIANGLES, endingVert - meshes[i].startingVert, GL_UNSIGNED_INT, (void*)(meshes[i].startingVert * sizeof(unsigned int)), instances);
         }
-        glDrawElementsInstanced(GL_TRIANGLES, indexCount - meshes[meshes.size()-1].startingVert, GL_UNSIGNED_INT, (void*)(meshes[meshes.size() - 1].startingVert * sizeof(unsigned int)), instances);
     }
 }
 
