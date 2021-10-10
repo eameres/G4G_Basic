@@ -159,7 +159,6 @@ void ObjModel::render(glm::mat4 treeMat, glm::mat4 vpMat, double deltaTime, Scen
 
             if (!enabled) return;
 
-
             glm::vec3 lightLoc = sg->light.position;
             glm::vec3 cameraLoc = sg->camera.position;
 
@@ -341,46 +340,6 @@ void ModelImporter::parseOBJ(const char* filePath) {
                         ni[i] = vi[i];
                 }
 
-                if (i > 2){
-                    for (int j = 1; j < 3; j++){
-                        
-                        int vertRef = (vi[j] - 1) * 3;
-                        int tcRef = (ti[j] - 1) * 2;
-                        int normRef = (ni[j] - 1) * 3;
-                        
-                        if (vertRef > -1) {
-                            triangleVerts.push_back(vertVals[vertRef]);
-                            triangleVerts.push_back(vertVals[vertRef + 1]);
-                            triangleVerts.push_back(vertVals[vertRef + 2]);
-                        }
-                        else {
-                            triangleVerts.push_back(0.0f);
-                            triangleVerts.push_back(0.0f);
-                            triangleVerts.push_back(0.0f);
-                        }
-
-                        if (tcRef > -1) {
-                            textureCoords.push_back(stVals[tcRef]);
-                            textureCoords.push_back(stVals[tcRef + 1]);
-                        }
-                        else {
-                            textureCoords.push_back(0.0f);
-                            textureCoords.push_back(0.0f);
-                        }
-
-                        if (normRef > -1) {
-                            normals.push_back(normVals[normRef]);
-                            normals.push_back(normVals[normRef + 1]);
-                            normals.push_back(normVals[normRef + 2]);
-                        }
-                        else {
-                            normals.push_back(0.0f);
-                            normals.push_back(0.0f);
-                            normals.push_back(0.0f);
-                        }
-                    }
-                }
-
                 int vertRef = (vi[i] - 1) * 3;
                 int tcRef = (ti[i] - 1) * 2;
                 int normRef = (ni[i] - 1) * 3;
@@ -414,6 +373,47 @@ void ModelImporter::parseOBJ(const char* filePath) {
                     normals.push_back(0.0f);
                     normals.push_back(0.0f);
                     normals.push_back(0.0f);
+                }
+                if (i > 2) {
+                    int k = 0;
+                    for (int j = 0; j < 2; j++) {
+
+                        int vertRef = (vi[k] - 1) * 3;
+                        int tcRef = (ti[k] - 1) * 2;
+                        int normRef = (ni[k] - 1) * 3;
+
+                        if (vertRef > -1) {
+                            triangleVerts.push_back(vertVals[vertRef]);
+                            triangleVerts.push_back(vertVals[vertRef + 1]);
+                            triangleVerts.push_back(vertVals[vertRef + 2]);
+                        }
+                        else {
+                            triangleVerts.push_back(0.0f);
+                            triangleVerts.push_back(0.0f);
+                            triangleVerts.push_back(0.0f);
+                        }
+
+                        if (tcRef > -1) {
+                            textureCoords.push_back(stVals[tcRef]);
+                            textureCoords.push_back(stVals[tcRef + 1]);
+                        }
+                        else {
+                            textureCoords.push_back(0.0f);
+                            textureCoords.push_back(0.0f);
+                        }
+
+                        if (normRef > -1) {
+                            normals.push_back(normVals[normRef]);
+                            normals.push_back(normVals[normRef + 1]);
+                            normals.push_back(normVals[normRef + 2]);
+                        }
+                        else {
+                            normals.push_back(0.0f);
+                            normals.push_back(0.0f);
+                            normals.push_back(0.0f);
+                        }
+                        k = 2;
+                    }
                 }
             }
         }
