@@ -61,7 +61,7 @@ void Chapter2::dragDrop(GLFWwindow* window, int count, const char** paths) {
         Material *temp = new Material(Shader::shaders["textured"], textureFile, loadTexture(textureFile.c_str()), 4, true);
         scene.addRenderer(new ObjModel(objFile.c_str(), temp, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(1.0f))));
     }else if (temp.find("obj") != std::string::npos)
-        scene.addRenderer(new ObjModel(paths[0], Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(1.0f))));
+        scene.addRenderer(new ObjModel(paths[0], Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)), glm::vec3(1.0f))));
 }
 void cubeOfCubes(SceneGraph* sg)
 {

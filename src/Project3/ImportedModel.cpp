@@ -276,57 +276,40 @@ void ModelImporter::parseOBJ(const char* filePath) {
     string content;
     ifstream fileStream(filePath, ios::in);
     string line = "";
+
+    string lType;
+    std::istringstream objStream(line);
+    vec3 cNormal;
+
     while (!fileStream.eof()) {
         getline(fileStream, line);
+        objStream.clear();
+        objStream.str(line);
 
-        if (line.compare(0, 6, "mtllib") == 0){
-            string attrib,fname;
-            std::istringstream some_stream(line);
-            some_stream >> attrib >> fname;
-            fname = getPathName(filePath) + fname;
-            parseMTL(fname.c_str());
-        }
-        if (line.compare(0, 2, "us") == 0) {
-            objMesh temp;
-            string action;
-            std::istringstream some_stream(line);
-            some_stream >> action >> temp.myName;
+        objStream >> lType;
 
-            if (meshes.empty() || ( temp.myName != meshes.back().myName)) // combine neighboring meshes of similar materials!
-            {
-                std::cout << action << " " << temp.myName << " " << getNumVertices() << "\n";
-                temp.startingVert = getNumVertices();
-                meshes.push_back(temp);
-            }
+        if (objStream.fail())
+            continue;
 
-        }
-        if (line.compare(0, 2, "v ") == 0) {
-            stringstream ss(line.erase(0, 1));
-            ss >> x; ss >> y; ss >> z;
+        if (lType.compare("v") == 0) {
+            objStream >> x >> y >> z;
             vertVals.push_back(vec3(x,y,z));
-        }
-        if (line.compare(0, 2, "vt") == 0) {
-            stringstream ss(line.erase(0, 2));
-            ss >> x; ss >> y;
+            continue;
+        }else if (lType.compare("vt") == 0) {
+            objStream >>  x >> y;
             stVals.push_back(vec2(x,y));
-        }
-        if (line.compare(0, 2, "vn") == 0) {
-            stringstream ss(line.erase(0, 2));
-            ss >> x; ss >> y; ss >> z;
+            continue;
+        }else if (lType.compare("vn") == 0) {
+            objStream >> x >> y >> z;
             normVals.push_back(vec3(x,y,z));
-        }
-        if (line.compare(0, 2, "f ") == 0) {
-            string oneCorner, v, t, n;
-            stringstream ss(line.erase(0, 2));
+            continue;
+        }else if (lType.compare("f") == 0) {
+            string oneCorner;
             std::vector<vertIndices> viList;
 
             for (int i = 0; i < 4; i++) {
-                while (ss.peek() == ' ') // skip spaces
-                    ss.get();
-
-                getline(ss, oneCorner, ' ');
-
-                if (!ss)
+                objStream >> oneCorner;
+                if (objStream.fail())
                     break;
 
                 vertIndices temp;
@@ -353,7 +336,6 @@ void ModelImporter::parseOBJ(const char* filePath) {
                     viList.push_back(viList[viList.size() - 3]);
                 }
             }
-            vec3 cNormal;
 
             if (viList[0].ni == 0) {
                 vec3 ab, bc;
@@ -397,6 +379,25 @@ void ModelImporter::parseOBJ(const char* filePath) {
                     normals.push_back(cNormal);
                 }
             }
+            continue;
+        }else if (lType.compare("mtllib") == 0) {
+            string fname;
+            objStream >> fname;
+            fname = getPathName(filePath) + fname;
+            parseMTL(fname.c_str());
+            continue;
+        }
+        else if (lType.compare("usemtl") == 0) {
+            objMesh temp;
+            objStream >> temp.myName;
+
+            if (meshes.empty() || (temp.myName != meshes.back().myName)) // combine neighboring meshes of similar materials!
+            {
+                std::cout << temp.myName << " " << getNumVertices() << "\n";
+                temp.startingVert = getNumVertices();
+                meshes.push_back(temp);
+            }
+            continue;
         }
     }
 }

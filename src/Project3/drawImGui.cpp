@@ -191,6 +191,9 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
 
             ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
 
+            if (ImGui::Button("Add Torus"))
+                sg->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+
             ImGui::End();
 
             ShaderEditor(sg);
