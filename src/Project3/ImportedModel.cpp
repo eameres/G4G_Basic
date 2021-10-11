@@ -225,7 +225,7 @@ void ModelImporter::parseMTL(const char* filePath) {
     string line = "";
     bool activeMtl = false;
     string newmtl, mtlName;
-    string attrib,val,texName;
+    string attrib,val;
     unsigned int tNum = 0;
     bool textured = false;
     glm::vec4 mtlColor;
@@ -251,10 +251,21 @@ void ModelImporter::parseMTL(const char* filePath) {
                 some_stream >> attrib;
                 if ((attrib == "map_Kd") || (attrib == "map_Ka")){
                     some_stream >> val;
-                    texName = val;
+                    if (val.compare( 0, 1, "-") == 0) {
+                        some_stream >> val;
+                        some_stream >> val;
+                    }
                     string tName = getPathName(filePath) + val;
-                    std::cout << "loading "<< attrib << " texture : " << tName << "\n";
-                    tNum = loadTexture(tName.c_str());
+
+                    if (textures[val] == NULL) {
+                        std::cout << "loading " << attrib << " texture : " << tName << "\n";
+                        tNum = loadTexture(tName.c_str());
+                        textures[val] = tNum;
+                    }
+                    else {
+                        std::cout << "already loaded " << attrib << " texture : " << tName << "\n";
+                        tNum = textures[val];
+                    }
                     std::cout << "done.\n";
                     textured = true;
                 }else if (attrib == "Kd") {

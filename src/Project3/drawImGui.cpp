@@ -128,9 +128,9 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
                 std::string mName = "mMatrix for model " + Renderer::renderList[item_current_idx]->name;
                 ImGui::Text(mName.c_str());
                 // values we'll use to derive a model matrix
-                ImGui::DragFloat3("Translate", transVec, .01f, -3.0f, 3.0f);
+                ImGui::DragFloat3("Translate", transVec, .01f, -30.0f, 30.0f);
                 ImGui::InputFloat3("Axis", axis, "%.2f");
-                ImGui::SliderAngle("Angle", &angle, -90.0f, 90.0f);
+                ImGui::SliderAngle("Angle", &angle, 0.0f, 360.0f);
                 ImGui::DragFloat3("Scale", scaleVec, .01f, 0.01f, 3.0f);
 
                 

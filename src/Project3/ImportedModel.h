@@ -32,6 +32,7 @@ private:
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec3> normVals;
 	std::vector<objMesh> meshes;
+	std::map<std::string, unsigned int> textures;
 	std::vector<vertIndices> vertIndexList;
 public:
 	ModelImporter();
