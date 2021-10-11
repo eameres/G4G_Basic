@@ -367,7 +367,8 @@ void ModelImporter::parseOBJ(const char* filePath) {
                 temp.ti = temp.ni = temp.vi = 0;
 
                 if (sscanf(oneCorner.c_str(), "%i/%i/%i", &temp.vi, &temp.ti, &temp.ni) != 3) {
-                    sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni);
+                    if (sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni) != 2)
+                        sscanf(oneCorner.c_str(), "%i/%i", &temp.vi, &temp.ti);
                 }
 
                 if (temp.vi < 0) temp.vi += vertVals.size()+1;
