@@ -18,6 +18,7 @@
 #include "ImportedModel.h"
 
 using namespace std;
+using namespace glm;
 
 ImportedModel::ImportedModel() {}
 
@@ -52,24 +53,24 @@ ObjModel::ObjModel(const char* filePath, Material* material, glm::mat4 m)
     Renderer::name = filePath;
     modelImporter.parseOBJ(filePath);
 
-    std::vector<float> verts = modelImporter.getVertices();
-    std::vector<float> tcs = modelImporter.getTextureCoordinates();
-    std::vector<float> normals = modelImporter.getNormals();
+    std::vector<vec3>& verts = modelImporter.getVertices();
+    std::vector<vec2>& tcs = modelImporter.getTextureCoordinates();
+    std::vector<vec3>& normals = modelImporter.getNormals();
 
     std::vector<float> vbovalues;
     std::vector<int> indices;
 
     for (int i = 0; i < modelImporter.getNumVertices(); i++) {
-        vbovalues.push_back(verts[i * 3]);
-        vbovalues.push_back(verts[i * 3 + 1]);
-        vbovalues.push_back(verts[i * 3 + 2]);
+        vbovalues.push_back(verts[i].x);
+        vbovalues.push_back(verts[i].y);
+        vbovalues.push_back(verts[i].z);
 
-        vbovalues.push_back(normals[i * 3]);
-        vbovalues.push_back(normals[i * 3 + 1]);
-        vbovalues.push_back(normals[i * 3 + 2]);
+        vbovalues.push_back(normals[i].x);
+        vbovalues.push_back(normals[i].y);
+        vbovalues.push_back(normals[i].z);
 
-        vbovalues.push_back(tcs[i * 2]);
-        vbovalues.push_back(tcs[i * 2 + 1]);
+        vbovalues.push_back(tcs[i].x);
+        vbovalues.push_back(tcs[i].y);
 
         indices.push_back(i);
     }
@@ -230,6 +231,7 @@ void ModelImporter::parseMTL(const char* filePath) {
     glm::vec4 mtlColor;
 
     if (fileStream.good()) {
+        std::cout << "loading material descriptions from " << filePath << "\n";
         while (!fileStream.eof()) {
             getline(fileStream, line);
             if (line.compare(0, 6, "newmtl") == 0){
@@ -251,7 +253,9 @@ void ModelImporter::parseMTL(const char* filePath) {
                     some_stream >> val;
                     texName = val;
                     string tName = getPathName(filePath) + val;
+                    std::cout << "loading "<< attrib << " texture : " << tName << "\n";
                     tNum = loadTexture(tName.c_str());
+                    std::cout << "done.\n";
                     textured = true;
                 }else if (attrib == "Kd") {
                     float r, g, b;
@@ -267,6 +271,40 @@ void ModelImporter::parseMTL(const char* filePath) {
     }
 }
 
+void ModelImporter::buildVerts()
+{
+    for (vertIndices temp : vertIndexList) {
+        int vertRef = temp.vi;
+        int tcRef = temp.ti;
+        int normRef = temp.ni;
+
+        // references start at 1, not 0, so adjust
+        vertRef--;
+        tcRef--;
+        normRef--;
+
+        if (vertRef > -1) {
+            triangleVerts.push_back(vertVals[vertRef]);
+        }
+        else {
+            triangleVerts.push_back(vec3(0.0f));
+        }
+
+        if (tcRef > -1) {
+            textureCoords.push_back(stVals[tcRef]);
+        }
+        else {
+            textureCoords.push_back(vec2(0.0f));
+        }
+
+        if (normRef > -1) {
+            normals.push_back(normVals[normRef]);
+        }
+        else {
+            normals.push_back(vec3(0.0));
+        }
+    }
+}
 void ModelImporter::parseOBJ(const char* filePath) {
     float x, y, z;
     string content;
@@ -274,6 +312,7 @@ void ModelImporter::parseOBJ(const char* filePath) {
     string line = "";
     while (!fileStream.eof()) {
         getline(fileStream, line);
+
         if (line.compare(0, 6, "mtllib") == 0){
             string attrib,fname;
             std::istringstream some_stream(line);
@@ -287,38 +326,34 @@ void ModelImporter::parseOBJ(const char* filePath) {
             std::istringstream some_stream(line);
             some_stream >> action >> temp.myName;
 
-            std::cout << action << " " << temp.myName << " " << triangleVerts.size() <<  "\n";
-            temp.startingVert = triangleVerts.size()/3; // number of vertices (coordinate triples), not the individual float count!!
-            meshes.push_back(temp);
+            if (meshes.empty() || ( temp.myName != meshes.back().myName)) // combine neighboring meshes of similar materials!
+            {
+                std::cout << action << " " << temp.myName << " " << getNumVertices() << "\n";
+                temp.startingVert = getNumVertices();
+                meshes.push_back(temp);
+            }
 
         }
         if (line.compare(0, 2, "v ") == 0) {
             stringstream ss(line.erase(0, 1));
             ss >> x; ss >> y; ss >> z;
-            vertVals.push_back(x);
-            vertVals.push_back(y);
-            vertVals.push_back(z);
+            vertVals.push_back(vec3(x,y,z));
         }
         if (line.compare(0, 2, "vt") == 0) {
             stringstream ss(line.erase(0, 2));
             ss >> x; ss >> y;
-            stVals.push_back(x);
-            stVals.push_back(y);
+            stVals.push_back(vec2(x,y));
         }
         if (line.compare(0, 2, "vn") == 0) {
             stringstream ss(line.erase(0, 2));
             ss >> x; ss >> y; ss >> z;
-            normVals.push_back(x);
-            normVals.push_back(y);
-            normVals.push_back(z);
+            normVals.push_back(vec3(x,y,z));
         }
         if (line.compare(0, 2, "f ") == 0) {
             string oneCorner, v, t, n;
             stringstream ss(line.erase(0, 2));
-            int vi[4],ti[4],ni[4];
+
             for (int i = 0; i < 4; i++) {
-                //int vi, ti, ni;
-                vi[i] = ti[i] = ni[i] = 0;
                 while (ss.peek() == ' ') // skip spaces
                     ss.get();
 
@@ -326,101 +361,32 @@ void ModelImporter::parseOBJ(const char* filePath) {
 
                 if (!ss)
                     break;
-                if (sscanf(oneCorner.c_str(), "%i/%i/%i", &vi[i], &ti[i], &ni[i]) != 3) {
-                    sscanf(oneCorner.c_str(), "%i//%i", &vi[i], &ni[i]);
+
+                vertIndices temp;
+
+                temp.ti = temp.ni = temp.vi = 0;
+
+                if (sscanf(oneCorner.c_str(), "%i/%i/%i", &temp.vi, &temp.ti, &temp.ni) != 3) {
+                    sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni);
                 }
 
-                if (ti[i] < 1) {
-                    if (stVals.size() / 2 >= vi[i])
-                        ti[i] = vi[i];
-                }
+                if (temp.vi < 0) temp.vi += vertVals.size()+1;
+                if (temp.ni < 0) temp.ni += normVals.size()+1;
+                if (temp.ti < 0) temp.ti += stVals.size()+1;
 
-                if (ni[i] < 1) {
-                    if (normVals.size() / 3 >= vi[i])
-                        ni[i] = vi[i];
-                }
+                vertIndexList.push_back(temp);
 
-                int vertRef = (vi[i] - 1) * 3;
-                int tcRef = (ti[i] - 1) * 2;
-                int normRef = (ni[i] - 1) * 3;
-                
-                if (vertRef > -1) {
-                    triangleVerts.push_back(vertVals[vertRef]);
-                    triangleVerts.push_back(vertVals[vertRef + 1]);
-                    triangleVerts.push_back(vertVals[vertRef + 2]);
-                }
-                else {
-                    triangleVerts.push_back(0.0f);
-                    triangleVerts.push_back(0.0f);
-                    triangleVerts.push_back(0.0f);
-                }
-
-                if (tcRef > -1) {
-                    textureCoords.push_back(stVals[tcRef]);
-                    textureCoords.push_back(stVals[tcRef + 1]);
-                }
-                else {
-                    textureCoords.push_back(0.0f);
-                    textureCoords.push_back(0.0f);
-                }
-
-                if (normRef > -1) {
-                    normals.push_back(normVals[normRef]);
-                    normals.push_back(normVals[normRef + 1]);
-                    normals.push_back(normVals[normRef + 2]);
-                }
-                else {
-                    normals.push_back(0.0f);
-                    normals.push_back(0.0f);
-                    normals.push_back(0.0f);
-                }
                 if (i > 2) {
-                    int k = 0;
-                    for (int j = 0; j < 2; j++) {
-
-                        int vertRef = (vi[k] - 1) * 3;
-                        int tcRef = (ti[k] - 1) * 2;
-                        int normRef = (ni[k] - 1) * 3;
-
-                        if (vertRef > -1) {
-                            triangleVerts.push_back(vertVals[vertRef]);
-                            triangleVerts.push_back(vertVals[vertRef + 1]);
-                            triangleVerts.push_back(vertVals[vertRef + 2]);
-                        }
-                        else {
-                            triangleVerts.push_back(0.0f);
-                            triangleVerts.push_back(0.0f);
-                            triangleVerts.push_back(0.0f);
-                        }
-
-                        if (tcRef > -1) {
-                            textureCoords.push_back(stVals[tcRef]);
-                            textureCoords.push_back(stVals[tcRef + 1]);
-                        }
-                        else {
-                            textureCoords.push_back(0.0f);
-                            textureCoords.push_back(0.0f);
-                        }
-
-                        if (normRef > -1) {
-                            normals.push_back(normVals[normRef]);
-                            normals.push_back(normVals[normRef + 1]);
-                            normals.push_back(normVals[normRef + 2]);
-                        }
-                        else {
-                            normals.push_back(0.0f);
-                            normals.push_back(0.0f);
-                            normals.push_back(0.0f);
-                        }
-                        k = 2;
-                    }
+                    vertIndexList.push_back(vertIndexList[vertIndexList.size() - 4]);
+                    vertIndexList.push_back(vertIndexList[vertIndexList.size() - 3]);
                 }
             }
         }
     }
+    buildVerts();
 }
-int ModelImporter::getNumVertices() { return (triangleVerts.size() / 3); }
-std::vector<float> ModelImporter::getVertices() { return triangleVerts; }
-std::vector<float> ModelImporter::getTextureCoordinates() { return textureCoords; }
-std::vector<float> ModelImporter::getNormals() { return normals; }
+int ModelImporter::getNumVertices() { return (vertIndexList.size()); }
+std::vector<vec3> ModelImporter::getVertices() { return triangleVerts; }
+std::vector<vec2> ModelImporter::getTextureCoordinates() { return textureCoords; }
+std::vector<vec3> ModelImporter::getNormals() { return normals; }
 std::vector<objMesh> ModelImporter::getMeshes() { return meshes; }

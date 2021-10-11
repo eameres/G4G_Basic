@@ -18,23 +18,29 @@ public:
 	std::vector<glm::vec3> getNormals();
 };
 
+struct vertIndices {
+	int vi, ti, ni;
+};
+
 class ModelImporter
 {
 private:
-	std::vector<float> vertVals;
-	std::vector<float> triangleVerts;
-	std::vector<float> textureCoords;
-	std::vector<float> stVals;
-	std::vector<float> normals;
-	std::vector<float> normVals;
+	std::vector<glm::vec3> vertVals;
+	std::vector<glm::vec3> triangleVerts;
+	std::vector<glm::vec2> textureCoords;
+	std::vector<glm::vec2> stVals;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec3> normVals;
 	std::vector<objMesh> meshes;
+	std::vector<vertIndices> vertIndexList;
 public:
 	ModelImporter();
 	void parseOBJ(const char* filePath);
 	void parseMTL(const char* filePath);
 	int getNumVertices();
-	std::vector<float> getVertices();
-	std::vector<float> getTextureCoordinates();
-	std::vector<float> getNormals();
+	std::vector<glm::vec3> getVertices();
+	std::vector<glm::vec2> getTextureCoordinates();
+	std::vector<glm::vec3> getNormals();
 	std::vector<objMesh> getMeshes();
+	void buildVerts();
 };
