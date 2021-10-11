@@ -42,5 +42,4 @@ public:
 	std::vector<glm::vec2> getTextureCoordinates();
 	std::vector<glm::vec3> getNormals();
 	std::vector<objMesh> getMeshes();
-	void buildVerts();
 };

@@ -239,7 +239,7 @@ void ModelImporter::parseMTL(const char* filePath) {
                     if (textured)
                         new Material(Shader::shaders["textured"], mtlName, tNum, 4, true);
                     else
-                        new Material(Shader::shaders["base"], mtlName, -1, mtlColor);
+                        new Material(Shader::shaders["PhongShadowed"], mtlName, -1, mtlColor);
                 }
                 std::istringstream some_stream(line);
                 some_stream >> newmtl >> mtlName;
@@ -267,44 +267,10 @@ void ModelImporter::parseMTL(const char* filePath) {
         if (textured)
             new Material(Shader::shaders["textured"], mtlName, tNum, 4, true);
         else
-            new Material(Shader::shaders["base"], mtlName, -1, mtlColor);
+            new Material(Shader::shaders["PhongShadowed"], mtlName, -1, mtlColor);
     }
 }
 
-void ModelImporter::buildVerts()
-{
-    for (vertIndices temp : vertIndexList) {
-        int vertRef = temp.vi;
-        int tcRef = temp.ti;
-        int normRef = temp.ni;
-
-        // references start at 1, not 0, so adjust
-        vertRef--;
-        tcRef--;
-        normRef--;
-
-        if (vertRef > -1) {
-            triangleVerts.push_back(vertVals[vertRef]);
-        }
-        else {
-            triangleVerts.push_back(vec3(0.0f));
-        }
-
-        if (tcRef > -1) {
-            textureCoords.push_back(stVals[tcRef]);
-        }
-        else {
-            textureCoords.push_back(vec2(0.0f));
-        }
-
-        if (normRef > -1) {
-            normals.push_back(normVals[normRef]);
-        }
-        else {
-            normals.push_back(vec3(0.0));
-        }
-    }
-}
 void ModelImporter::parseOBJ(const char* filePath) {
     float x, y, z;
     string content;
@@ -352,6 +318,7 @@ void ModelImporter::parseOBJ(const char* filePath) {
         if (line.compare(0, 2, "f ") == 0) {
             string oneCorner, v, t, n;
             stringstream ss(line.erase(0, 2));
+            std::vector<vertIndices> viList;
 
             for (int i = 0; i < 4; i++) {
                 while (ss.peek() == ' ') // skip spaces
@@ -367,26 +334,73 @@ void ModelImporter::parseOBJ(const char* filePath) {
                 temp.ti = temp.ni = temp.vi = 0;
 
                 if (sscanf(oneCorner.c_str(), "%i/%i/%i", &temp.vi, &temp.ti, &temp.ni) != 3) {
-                    if (sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni) != 2)
-                        sscanf(oneCorner.c_str(), "%i/%i", &temp.vi, &temp.ti);
+                    temp.ti = temp.ni = temp.vi = 0;
+                    if (sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni) != 2) {
+                        temp.ti = temp.ni = temp.vi = 0;
+                        if (sscanf(oneCorner.c_str(), "%i/%i", &temp.vi, &temp.ti) != 2)
+                            std::cout << "unimplemented face format\n";
+                    }
                 }
 
-                if (temp.vi < 0) temp.vi += vertVals.size()+1;
-                if (temp.ni < 0) temp.ni += normVals.size()+1;
-                if (temp.ti < 0) temp.ti += stVals.size()+1;
+                if (temp.vi < 0) temp.vi += vertVals.size() + 1;
+                if (temp.ni < 0) temp.ni += normVals.size() + 1;
+                if (temp.ti < 0) temp.ti += stVals.size() + 1;
 
-                vertIndexList.push_back(temp);
+                viList.push_back(temp);
 
                 if (i > 2) {
-                    vertIndexList.push_back(vertIndexList[vertIndexList.size() - 4]);
-                    vertIndexList.push_back(vertIndexList[vertIndexList.size() - 3]);
+                    viList.push_back(viList[viList.size() - 4]);
+                    viList.push_back(viList[viList.size() - 3]);
+                }
+            }
+            vec3 cNormal;
+
+            if (viList[0].ni == 0) {
+                vec3 ab, bc;
+
+                ab = vertVals[viList[2].vi - 1] - vertVals[viList[1].vi - 1];
+                bc = vertVals[viList[0].vi - 1] - vertVals[viList[1].vi - 1];
+
+                cNormal = cross(ab, bc);
+            }
+            else
+                cNormal = vec3(0);
+
+            for (vertIndices temp : viList) {
+                int vertRef = temp.vi;
+                int tcRef = temp.ti;
+                int normRef = temp.ni;
+
+                // references start at 1, not 0, so adjust
+                vertRef--;
+                tcRef--;
+                normRef--;
+
+                if (vertRef > -1) {
+                    triangleVerts.push_back(vertVals[vertRef]);
+                }
+                else {
+                    triangleVerts.push_back(vec3(0.0f));
+                }
+
+                if (tcRef > -1) {
+                    textureCoords.push_back(stVals[tcRef]);
+                }
+                else {
+                    textureCoords.push_back(vec2(0.0f));
+                }
+
+                if (normRef > -1) {
+                    normals.push_back(normVals[normRef]);
+                }
+                else {
+                    normals.push_back(cNormal);
                 }
             }
         }
     }
-    buildVerts();
 }
-int ModelImporter::getNumVertices() { return (vertIndexList.size()); }
+int ModelImporter::getNumVertices() { return (triangleVerts.size()); }
 std::vector<vec3> ModelImporter::getVertices() { return triangleVerts; }
 std::vector<vec2> ModelImporter::getTextureCoordinates() { return textureCoords; }
 std::vector<vec3> ModelImporter::getNormals() { return normals; }
