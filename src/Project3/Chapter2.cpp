@@ -42,11 +42,26 @@ SceneGraph* globalScene;
 void Chapter2::dragDrop(GLFWwindow* window, int count, const char** paths) {
     int i;
 
+    std::string objFile, textureFile;
+
     while (scene.getRoot() != scene.getCurrentNode())
         scene.getParent();
 
-    for (i = 0; i < count; i++)
-        scene.addRenderer(new ObjModel(paths[i], Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(1.0f))));
+    std::string temp = paths[0];
+
+    if (count > 1) {
+        for (i = 0; i < count; i++) {
+            temp = paths[i];
+            if (temp.find("obj") != std::string::npos) {
+                objFile = temp;
+            }
+            else if((temp.find("jpg") != std::string::npos) || (temp.find("png") != std::string::npos))
+                textureFile = temp;
+        }        
+        Material *temp = new Material(Shader::shaders["textured"], textureFile, loadTexture(textureFile.c_str()), 4, true);
+        scene.addRenderer(new ObjModel(objFile.c_str(), temp, glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(1.0f))));
+    }else if (temp.find("obj") != std::string::npos)
+        scene.addRenderer(new ObjModel(paths[0], Material::materials["litMaterial"], glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -3.0f, 0.0f)), glm::vec3(1.0f))));
 }
 void cubeOfCubes(SceneGraph* sg)
 {
