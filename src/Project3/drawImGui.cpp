@@ -228,8 +228,17 @@ void ListRenderers(SceneGraph* sg) {
                 sg->purgeRenderer(Renderer::renderList[item_current_idx]);
             }
         }
-        if (ImGui::Button("Add Torus"))
-            sg->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+        if (ImGui::Button("Add Torus")) {
+            sg->getRoot()->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Add Cube")) {
+            sg->getRoot()->addRenderer(new CubeModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Add Sphere")) {
+            sg->getRoot()->addRenderer(new SphereModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+        }
     }
     ImGui::End();
 }
