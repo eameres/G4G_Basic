@@ -234,26 +234,27 @@ void ModelImporter::parseMTL(const char* filePath) {
         std::cout << "loading material descriptions from " << filePath << "\n";
         while (!fileStream.eof()) {
             getline(fileStream, line);
-            if (line.compare(0, 6, "newmtl") == 0){
+            std::istringstream nStream;
+            nStream.clear();
+            nStream.str(line);
+            nStream >> attrib;
+
+            if (attrib == "newmtl"){
                 if (activeMtl) {
                     if (textured)
                         new Material(Shader::shaders["textured"], mtlName, tNum, 4, true);
                     else
                         new Material(Shader::shaders["PhongShadowed"], mtlName, -1, mtlColor);
                 }
-                std::istringstream some_stream(line);
-                some_stream >> newmtl >> mtlName;
+                nStream >> mtlName;
                 activeMtl = true;
                 textured = false;
-            }
-            else {
-                std::istringstream some_stream(line);
-                some_stream >> attrib;
+            }else {
                 if ((attrib == "map_Kd") || (attrib == "map_Ka")){
-                    some_stream >> val;
+                    nStream >> val;
                     if (val.compare( 0, 1, "-") == 0) {
-                        some_stream >> val;
-                        some_stream >> val;
+                        nStream >> val;
+                        nStream >> val;
                     }
                     string tName = getPathName(filePath) + val;
 
@@ -266,11 +267,10 @@ void ModelImporter::parseMTL(const char* filePath) {
                         std::cout << "already loaded " << attrib << " texture : " << tName << "\n";
                         tNum = textures[val];
                     }
-                    std::cout << "done.\n";
                     textured = true;
                 }else if (attrib == "Kd") {
                     float r, g, b;
-                    some_stream >> r >> g >> b;
+                    nStream >> r >> g >> b;
                     mtlColor = glm::vec4(r,g,b,1.0);
                 }
             }
@@ -331,8 +331,11 @@ void ModelImporter::parseOBJ(const char* filePath) {
                     temp.ti = temp.ni = temp.vi = 0;
                     if (sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni) != 2) {
                         temp.ti = temp.ni = temp.vi = 0;
-                        if (sscanf(oneCorner.c_str(), "%i/%i", &temp.vi, &temp.ti) != 2)
-                            std::cout << "unimplemented face format\n";
+                        if (sscanf(oneCorner.c_str(), "%i/%i", &temp.vi, &temp.ti) != 2){
+                            temp.ti = temp.ni = temp.vi = 0;
+                            if (sscanf(oneCorner.c_str(), "%i", &temp.vi) != 1)
+                                std::cout << "unimplemented face format\n";
+                        }
                     }
                 }
 
