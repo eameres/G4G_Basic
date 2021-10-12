@@ -906,7 +906,7 @@ namespace ImGui
 } // namespace ImGui
 
 //-----------------------------------------------------------------------------
-// [SECTION] Flags & Enumerations
+// [SECTION] Flags & EnumerationsImGuiwindow
 //-----------------------------------------------------------------------------
 
 // Flags for ImGui::Begin()

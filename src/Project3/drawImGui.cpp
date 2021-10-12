@@ -47,12 +47,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
     SceneGraph *sg, std::map<std::string, unsigned int> texMap,treeNode * nodes[]) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {
-            // used to get values from imGui to the model matrix
-            static float axis[] = { 0.0f,0.0f,1.0f };
-            static float angle = 0.0f;
 
-            static float transVec[] = { 0.0f,0.0f,0.0f };
-            static float scaleVec[] = { 1.0f,1.0f,1.0f };
 
             // used to get values from imGui to the camera (view) matrix
             static float v_axis[] = { 0.0f,1.0f,0.0f };
@@ -86,63 +81,6 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
             else
                 sg->time = baseTime = glfwGetTime();
 
-            ImGui::Checkbox("Node 0", &nodes[0]->enabled);
-            ImGui::SameLine(); ImGui::Checkbox("Node1", &nodes[1]->enabled);
-            ImGui::SameLine(); ImGui::Checkbox("Node2", &nodes[2]->enabled);
-            ImGui::SameLine(); ImGui::Checkbox("Node3", &nodes[3]->enabled);
-            ImGui::SameLine(); ImGui::Checkbox("Node4", &nodes[4]->enabled);
-
-            if (item_current_idx >= Renderer::renderList.size())
-                item_current_idx = Renderer::renderList.size()-1;
-
-            if ((Renderer::renderList.size() > 0) && (Renderer::renderList[item_current_idx] != NULL)) {
-
-                glm::vec3 scale;
-                glm::quat rotation;
-                glm::vec3 translation;
-                glm::vec3 skew;
-                glm::vec4 perspective;
-                glm::decompose(Renderer::renderList[item_current_idx]->modelMatrix, scale, rotation, translation, skew, perspective);
-
-                transVec[0] = translation.x;
-                transVec[1] = translation.y;
-                transVec[2] = translation.z;
-
-                scaleVec[0] = scale.x;
-                scaleVec[1] = scale.y;
-                scaleVec[2] = scale.z;
-
-                rotation = glm::conjugate(rotation);
-
-                angle = 2 * acos(rotation.w);
-
-                double s = sqrt(1 - rotation.w * rotation.w);
-
-                if (s < 0.001) s = 1;
-                
-                axis[0] = rotation.x / s;
-                axis[1] = rotation.y / s;
-                axis[2] = rotation.z / s;
-
-                if (axis[0] == axis[1] == axis[2] == 0.0) {
-                    axis[0] = 1.0;
-                }
-                std::string mName = "mMatrix for model " + Renderer::renderList[item_current_idx]->name;
-                ImGui::Text(mName.c_str());
-                // values we'll use to derive a model matrix
-                ImGui::DragFloat3("Translate", transVec, .01f, -30.0f, 30.0f);
-                ImGui::InputFloat3("Axis", axis, "%.2f");
-                ImGui::SliderAngle("Angle", &angle, 0.0f, 360.0f);
-                ImGui::DragFloat3("Scale", scaleVec, .01f, 0.01f, 3.0f);
-
-                
-                // factor in the results of imgui tweaks for the next round...
-                Renderer::renderList[item_current_idx]->setXForm(glm::mat4(1.0f));
-                Renderer::renderList[item_current_idx]->translate(transVec);
-                Renderer::renderList[item_current_idx]->rotate(axis, angle);
-                Renderer::renderList[item_current_idx]->scale(scaleVec);
-                
-            }
             ImGui::Text("Camera Matrix");
             ImGui::SameLine(); ImGui::Checkbox("AutoPan", &autoPan);
             // values we'll use to derive a model matrix
@@ -166,17 +104,6 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
 
             sg->camera.setPerspective(glm::radians(camFOV), camAspect, camClip[0], camClip[1]);    //  1.0472 radians = 60 degrees
 
-            static float point[3] = { 0,0,0 };
-
-            ImGui::DragFloat3("point", point, .1f, -10.0f, 10.0f);
-            glm::vec4 glmPoint = glm::vec4(point[0], point[1], point[2], 1.0);
-
-            glmPoint = sg->camera.projection() * glmPoint;
-
-            ImGui::Text("Transformed %.3f, %.3f, %.3f %.3f", glmPoint.x, glmPoint.y, glmPoint.z, glmPoint.w);
-            glmPoint /= glmPoint.w;
-            ImGui::Text("Transformed %.3f, %.3f, %.3f %.3f", glmPoint.x, glmPoint.y, glmPoint.z, glmPoint.w);
-
             glm::mat4 vMat = glm::rotate(glm::mat4(1.0f), -v_angle, glm::vec3(v_axis[0], v_axis[1], v_axis[2]));
 
             sg->camera.position = vMat * glm::vec4(v_transVec[0], v_transVec[1], v_transVec[2], 1.0f);
@@ -190,26 +117,35 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
             //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
         
             ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(128, 128));
-
+            ImGui::SameLine();
             ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
 
             ImGui::End();
 
             ShaderEditor(sg);
-            ListRenderers(sg);
+            ListRenderers(sg, nodes);
             // IMGUI Rendering
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
 }
-void ListRenderers(SceneGraph* sg) {
-    // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-    ImGui::Begin("Render List");  // Create a window and append into it.
+
+static void ListRenderers(SceneGraph *sg, treeNode* nodes[])
+{
+    bool p_open = true;
+
+    if (ImGui::Begin("Model Editor", &p_open, ImGuiWindowFlags_MenuBar))
     {
-        
-        if (ImGui::BeginListBox("listbox 1"))
+        ImGui::Checkbox("Node 0", &nodes[0]->enabled);
+        ImGui::SameLine(); ImGui::Checkbox("Node1", &nodes[1]->enabled);
+        ImGui::SameLine(); ImGui::Checkbox("Node2", &nodes[2]->enabled);
+        ImGui::SameLine(); ImGui::Checkbox("Node3", &nodes[3]->enabled);
+        ImGui::SameLine(); ImGui::Checkbox("Node4", &nodes[4]->enabled);
+        // Left
+        static int selected = 0;
         {
-            for (int n = 0; n < Renderer::renderList.size(); n++)
+            ImGui::BeginChild("left pane", ImVec2(150, 0), true);
+                        for (int n = 0; n < Renderer::renderList.size(); n++)
             {
                 const bool is_selected = (item_current_idx == n);
 
@@ -221,27 +157,116 @@ void ListRenderers(SceneGraph* sg) {
                 if (is_selected)
                     ImGui::SetItemDefaultFocus();
             }
-            ImGui::EndListBox();
+
+            ImGui::EndChild();
         }
-        if (ImGui::Button("Delete")) {
-            if ((Renderer::renderList.size() > 0) && (Renderer::renderList[item_current_idx] != NULL)) {
-                sg->purgeRenderer(Renderer::renderList[item_current_idx]);
+        ImGui::SameLine();
+
+        // Right
+        {
+            ImGui::BeginGroup();
+            ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()),false, ImGuiWindowFlags_NoScrollbar); // Leave room for 1 line below us
+
+            char cName[128];
+            strcpy(cName, Renderer::renderList[item_current_idx]->name.c_str());
+            ImGui::InputText("##edit", cName, IM_ARRAYSIZE(cName));
+            Renderer::renderList[item_current_idx]->name = cName;
+
+            ImGui::Separator();
+            if (ImGui::BeginTabBar("##Tabs", ImGuiTabBarFlags_None))
+            {
+                if (ImGui::BeginTabItem("Transform"))
+                {
+                    // used to get values from imGui to the model matrix
+                    static float axis[] = { 0.0f,0.0f,1.0f };
+                    static float angle = 0.0f;
+
+                    static float transVec[] = { 0.0f,0.0f,0.0f };
+                    static float scaleVec[] = { 1.0f,1.0f,1.0f };
+
+                    if (item_current_idx >= Renderer::renderList.size())
+                        item_current_idx = Renderer::renderList.size() - 1;
+
+                    if ((Renderer::renderList.size() > 0) && (Renderer::renderList[item_current_idx] != NULL)) {
+
+                        glm::vec3 scale;
+                        glm::quat rotation;
+                        glm::vec3 translation;
+                        glm::vec3 skew;
+                        glm::vec4 perspective;
+                        glm::decompose(Renderer::renderList[item_current_idx]->modelMatrix, scale, rotation, translation, skew, perspective);
+
+                        transVec[0] = translation.x;
+                        transVec[1] = translation.y;
+                        transVec[2] = translation.z;
+
+                        scaleVec[0] = scale.x;
+                        scaleVec[1] = scale.y;
+                        scaleVec[2] = scale.z;
+
+                        rotation = glm::conjugate(rotation);
+
+                        angle = 2 * acos(rotation.w);
+
+                        double s = sqrt(1 - rotation.w * rotation.w);
+
+                        if (s < 0.001) s = 1;
+
+                        axis[0] = rotation.x / s;
+                        axis[1] = rotation.y / s;
+                        axis[2] = rotation.z / s;
+
+                        if (axis[0] == axis[1] == axis[2] == 0.0) {
+                            axis[0] = 1.0;
+                        }
+                        std::string mName = "mMatrix for model " + Renderer::renderList[item_current_idx]->name;
+                        ImGui::Text(mName.c_str());
+                        // values we'll use to derive a model matrix
+                        ImGui::DragFloat3("Translate", transVec, .01f, -30.0f, 30.0f);
+                        ImGui::InputFloat3("Axis", axis, "%.2f");
+                        ImGui::SliderAngle("Angle", &angle, 0.0f, 360.0f);
+                        ImGui::DragFloat3("Scale", scaleVec, .01f, 0.01f, 3.0f);
+
+
+                        // factor in the results of imgui tweaks for the next round...
+                        Renderer::renderList[item_current_idx]->setXForm(glm::mat4(1.0f));
+                        Renderer::renderList[item_current_idx]->translate(transVec);
+                        Renderer::renderList[item_current_idx]->rotate(axis, angle);
+                        Renderer::renderList[item_current_idx]->scale(scaleVec);
+
+                    }
+                    
+                    ImGui::EndTabItem();
+                }
+                if (ImGui::BeginTabItem("Material"))
+                {
+                    ImGui::Text("Coming Soon!");
+                    ImGui::EndTabItem();
+                }
+                ImGui::EndTabBar();
             }
-        }
-        if (ImGui::Button("Add Torus")) {
-            sg->getRoot()->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Add Cube")) {
-            sg->getRoot()->addRenderer(new CubeModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Add Sphere")) {
-            sg->getRoot()->addRenderer(new SphereModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+            if (ImGui::Button("Delete")) {
+                if ((Renderer::renderList.size() > 0) && (Renderer::renderList[item_current_idx] != NULL)) {
+                    sg->purgeRenderer(Renderer::renderList[item_current_idx]);
+                }
+            }
+            if (ImGui::Button("Add Torus")) {
+                sg->getRoot()->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Add Cube")) {
+                sg->getRoot()->addRenderer(new CubeModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+            }
+            
+            if (ImGui::Button("Add Sphere")) {
+                sg->getRoot()->addRenderer(new SphereModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+            }
+            ImGui::EndGroup();
         }
     }
     ImGui::End();
 }
+
 void ShaderEditor(SceneGraph* sg) {
     // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
         {

@@ -80,6 +80,7 @@ void cubeOfCubes(SceneGraph* sg)
                 else
                     nC = new CubeModel(Material::materials["litMaterial"], xf);
                 sg->addRenderer(nC);
+                nC->name = "subCube "  + std::to_string(i)  + ':' + std::to_string(j) + ':' + std::to_string(k);
             }
 }
 
