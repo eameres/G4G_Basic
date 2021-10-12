@@ -20,3 +20,40 @@ void treeNode::traverse(glm::mat4 treeModelMat, glm::mat4 viewProjection, double
         }
     }
 }
+
+void treeNode::purgeRenderer(Renderer *x) {
+
+    // first step, remove model's occurances pointed to by this node
+    // do this in reverse to avoid problems in vector changing
+    for (int i = group.size() - 1; i >= 0; i--)
+    {
+        if (group[i] == x)
+        group.erase(group.begin()+i);
+    }
+    // if there are any children nodes, call them, passing down the concatenated "treeView" matrix
+    if (children.size() > 0) {
+        for (treeNode* n : children) {
+            n->purgeRenderer(x);
+        }
+    }
+}
+
+void SceneGraph::purgeRenderer(Renderer* x) {
+
+    // purge from the tree
+    tree->purgeRenderer(x);
+
+    // purge from the scene's list
+    for (int i = rendererList.size() - 1; i >= 0; i--)
+    {
+        if (rendererList[i] == x)
+            rendererList.erase(rendererList.begin() + i);
+    }
+
+    // purge from the master list
+    for (int i = Renderer::renderList.size() - 1; i >= 0; i--)
+    {
+        if (Renderer::renderList[i] == x)
+            Renderer::renderList.erase(Renderer::renderList.begin() + i);
+    }
+}

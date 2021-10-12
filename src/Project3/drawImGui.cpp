@@ -92,8 +92,10 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
             ImGui::SameLine(); ImGui::Checkbox("Node3", &nodes[3]->enabled);
             ImGui::SameLine(); ImGui::Checkbox("Node4", &nodes[4]->enabled);
 
+            if (item_current_idx >= Renderer::renderList.size())
+                item_current_idx = Renderer::renderList.size()-1;
 
-            if (Renderer::renderList[item_current_idx] != NULL) {
+            if ((Renderer::renderList.size() > 0) && (Renderer::renderList[item_current_idx] != NULL)) {
 
                 glm::vec3 scale;
                 glm::quat rotation;
@@ -191,9 +193,6 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
 
             ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
 
-            if (ImGui::Button("Add Torus"))
-                sg->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
-
             ImGui::End();
 
             ShaderEditor(sg);
@@ -224,6 +223,13 @@ void ListRenderers(SceneGraph* sg) {
             }
             ImGui::EndListBox();
         }
+        if (ImGui::Button("Delete")) {
+            if ((Renderer::renderList.size() > 0) && (Renderer::renderList[item_current_idx] != NULL)) {
+                sg->purgeRenderer(Renderer::renderList[item_current_idx]);
+            }
+        }
+        if (ImGui::Button("Add Torus"))
+            sg->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
     }
     ImGui::End();
 }

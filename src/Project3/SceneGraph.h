@@ -96,7 +96,8 @@ public:
     treeNode* addChild(glm::mat4 xf) { children.push_back(new treeNode(xf, this)); return children.back(); }
     treeNode* getParent() { return this->parent; }
 
-    void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, SceneGraph * sg);
+    void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, SceneGraph* sg);
+    void purgeRenderer(Renderer *x);
 };
 
 class SceneGraph {
@@ -118,6 +119,9 @@ public:
         currNode->addRenderer(r); 
         rendererList.push_back(r);
     }
+
+    void purgeRenderer(Renderer* x);
+
     treeNode* getCurrentNode() {
         return currNode;
     }    
