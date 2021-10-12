@@ -224,7 +224,7 @@ void ModelImporter::parseMTL(const char* filePath) {
     ifstream fileStream(filePath, ios::in);
     string line = "";
     bool activeMtl = false;
-    string newmtl, mtlName;
+    string mtlName;
     string attrib,val;
     unsigned int tNum = 0;
     bool textured = false;
@@ -302,19 +302,19 @@ void ModelImporter::parseOBJ(const char* filePath) {
         if (objStream.fail())
             continue;
 
-        if (lType.compare("v") == 0) {
+        if (lType == "v") { // vertex coordinates
             objStream >> x >> y >> z;
             vertVals.push_back(vec3(x,y,z));
             continue;
-        }else if (lType.compare("vt") == 0) {
+        }else if (lType == "vt") { // texture coordinates
             objStream >>  x >> y;
             stVals.push_back(vec2(x,y));
             continue;
-        }else if (lType.compare("vn") == 0) {
+        }else if (lType == "vn") { // vertex normals
             objStream >> x >> y >> z;
             normVals.push_back(vec3(x,y,z));
             continue;
-        }else if (lType.compare("f") == 0) {
+        }else if (lType == "f") { // faces
             string oneCorner;
             std::vector<vertIndices> viList;
 
@@ -326,7 +326,8 @@ void ModelImporter::parseOBJ(const char* filePath) {
                 vertIndices temp;
 
                 temp.ti = temp.ni = temp.vi = 0;
-
+                
+                // parse each face's indices
                 if (sscanf(oneCorner.c_str(), "%i/%i/%i", &temp.vi, &temp.ti, &temp.ni) != 3) {
                     temp.ti = temp.ni = temp.vi = 0;
                     if (sscanf(oneCorner.c_str(), "%i//%i", &temp.vi, &temp.ni) != 2) {
@@ -338,20 +339,22 @@ void ModelImporter::parseOBJ(const char* filePath) {
                         }
                     }
                 }
-
+                // account for relative indexing, adjust by number of preceding attributes
                 if (temp.vi < 0) temp.vi += vertVals.size() + 1;
                 if (temp.ni < 0) temp.ni += normVals.size() + 1;
                 if (temp.ti < 0) temp.ti += stVals.size() + 1;
 
                 viList.push_back(temp);
 
-                if (i > 2) {
+                if (i > 2) { 
+                    // if more than 3 verts in face, it's a quad, so re-emit 2 verts to cause a tri
                     viList.push_back(viList[viList.size() - 4]);
                     viList.push_back(viList[viList.size() - 3]);
                 }
             }
 
             if (viList[0].ni == 0) {
+                // if no normal, calculate a face formal from face edges
                 vec3 ab, bc;
 
                 ab = vertVals[viList[2].vi - 1] - vertVals[viList[1].vi - 1];
@@ -394,18 +397,18 @@ void ModelImporter::parseOBJ(const char* filePath) {
                 }
             }
             continue;
-        }else if (lType.compare("mtllib") == 0) {
+        }else if (lType == "mtllib") { // uses a material library file
             string fname;
             objStream >> fname;
             fname = getPathName(filePath) + fname;
             parseMTL(fname.c_str());
             continue;
         }
-        else if (lType.compare("usemtl") == 0) {
+        else if (lType == "usemtl") { // use this material on the next faces, unitl next material
             objMesh temp;
             objStream >> temp.myName;
 
-            if (meshes.empty() || (temp.myName != meshes.back().myName)) // combine neighboring meshes of similar materials!
+            if (meshes.empty() || (temp.myName != meshes.back().myName)) // only create mesh when there is a material change
             {
                 std::cout << temp.myName << " " << getNumVertices() << "\n";
                 temp.startingVert = getNumVertices();
