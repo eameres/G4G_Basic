@@ -34,8 +34,8 @@ TorusModel::TorusModel(Material* material, glm::mat4 m)
     std::vector<int> indices;
 
     int sides = 40, cs_sides = 20;
-    float radius = .15;
-    float cs_radius = .05;
+    float radius = .35;
+    float cs_radius = .15;
 
     constexpr float twoPi = glm::pi<float>() * 2.0f;
 

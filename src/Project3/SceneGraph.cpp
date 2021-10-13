@@ -39,7 +39,7 @@ void treeNode::purgeRenderer(Renderer *x) {
 }
 
 void SceneGraph::purgeRenderer(Renderer* x) {
-
+    
     // purge from the tree
     tree->purgeRenderer(x);
 
@@ -53,7 +53,9 @@ void SceneGraph::purgeRenderer(Renderer* x) {
     // purge from the master list
     for (int i = Renderer::renderList.size() - 1; i >= 0; i--)
     {
-        if (Renderer::renderList[i] == x)
+        if (Renderer::renderList[i] == x) {
             Renderer::renderList.erase(Renderer::renderList.begin() + i);
+        }
     }
+    delete (x);
 }
