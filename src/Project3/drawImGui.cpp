@@ -261,6 +261,13 @@ static void ListRenderers(SceneGraph *sg, treeNode* nodes[])
                         ImGui::OpenPopup("nonDeletable");
                     }
                 }
+                ImGui::SameLine();
+                if (ImGui::Button("Delete All")) {
+                    if (Renderer::renderList.size() > 2) {
+                        for (int i = Renderer::renderList.size() - 1; i >= 2; i--)
+                            sg->purgeRenderer(Renderer::renderList[i]);
+                    }
+                }
             }
             if (ImGui::Button("Add Torus")) {
                 sg->getRoot()->addRenderer(new TorusModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
