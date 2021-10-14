@@ -53,9 +53,9 @@ ObjModel::ObjModel(const char* filePath, Material* material, glm::mat4 m)
     Renderer::name = filePath;
     modelImporter.parseOBJ(filePath);
 
-    std::vector<vec3>& verts = modelImporter.getVertices();
-    std::vector<vec2>& tcs = modelImporter.getTextureCoordinates();
-    std::vector<vec3>& normals = modelImporter.getNormals();
+    const std::vector<vec3>& verts = modelImporter.getVertices();
+    const std::vector<vec2>& tcs = modelImporter.getTextureCoordinates();
+    const std::vector<vec3>& normals = modelImporter.getNormals();
 
     std::vector<float> vbovalues;
     std::vector<int> indices;

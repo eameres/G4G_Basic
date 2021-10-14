@@ -130,7 +130,7 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
         }
 }
 
-static void ListRenderers(SceneGraph *sg, treeNode* nodes[])
+void ListRenderers(SceneGraph *sg, treeNode* nodes[])
 {
     bool p_open = true;
 
@@ -165,7 +165,7 @@ static void ListRenderers(SceneGraph *sg, treeNode* nodes[])
         // Right
         {
             ImGui::BeginGroup();
-            ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()),false, ImGuiWindowFlags_NoScrollbar); // Leave room for 1 line below us
+            //ImGui::BeginChild("item view", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()),false, ImGuiWindowFlags_NoScrollbar); // Leave room for 1 line below us
 
             if ((Renderer::renderList.size() > 0) && (item_current_idx < Renderer::renderList.size())) {
                 char cName[128];
