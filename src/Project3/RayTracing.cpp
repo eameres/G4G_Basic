@@ -199,7 +199,7 @@ void render(const std::vector<Sphere>& spheres)
             imageBuff[y][x][0] = pixel->x * 255.0;
             imageBuff[y][x][1] = pixel->y * 255.0;
             imageBuff[y][x][2] = pixel->z * 255.0;
-            imageBuff[y][x][3] = 64.0;
+            imageBuff[y][x][3] = 255.0;
         }
     }
 #ifdef WRITE_TO_PPM
