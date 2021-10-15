@@ -114,12 +114,15 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
             if (cubeSystem != NULL)
                 ImGui::DragInt("particles", &(cubeSystem->instances), 1, 0, cubeSystem->maxParticles);
 
-            //ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
+            ImGui::ShowDemoWindow(); // easter egg!  show the ImGui demo window
         
             ImGui::Image((void*)(intptr_t)texMap["depth"], ImVec2(128, 128));
             ImGui::SameLine();
             ImGui::Image((void*)(intptr_t)texMap["offScreen"], ImVec2(128, 128));
+            
+            void treeTest(SceneGraph * sg);
 
+            treeTest(sg);
             ImGui::End();
 
             ShaderEditor(sg);
@@ -128,6 +131,32 @@ void drawIMGUI(Renderer *myRenderer, iCubeModel*cubeSystem,
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
+}
+
+static void showChildren(treeNode* tn) {
+
+
+    std::vector<treeNode*> *children = tn->getChildren();
+    int i = 0;
+
+    for (treeNode *t : *children) {
+        if (ImGui::TreeNode((void*)(intptr_t)i, "Child %d", i)) {
+            if (t->getChildren()->size() > 0)
+                showChildren(t);
+            ImGui::TreePop();
+        }
+        i++;
+    }
+}
+void treeTest(SceneGraph *sg) {
+
+    treeNode *start = sg->getRoot();
+
+    if (ImGui::TreeNode("Scene"))
+    {
+        showChildren(start);
+        ImGui::TreePop();
+    }
 }
 
 void ListRenderers(SceneGraph *sg, treeNode* nodes[])

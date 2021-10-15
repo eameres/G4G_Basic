@@ -110,9 +110,15 @@ void BasicChapter::start()
     // OK, now to the scene stuff...
     // 
     // Setup all of the objects to be rendered and add them to the scene at the appropriate level
-    scene.addRenderer(new SphereModel(Material::materials["checkers"], glm::translate(glm::mat4(0.5f), glm::vec3(0.0f, 0.0f, 0.0f))));
+    
+    Renderer* temp;
+    scene.addRenderer(temp = new SphereModel(Material::materials["checkers"], glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
 
-    scene.addRenderer(new SphereModel(Material::materials["litMaterial"], glm::translate(glm::mat4(0.5f), glm::vec3(-2.5f, -1.0f, 0.0f))));
+    float scale[] = { .5,.5,.5 };
+    temp->scale(scale);
+
+    scene.addRenderer(temp  = new SphereModel(Material::materials["litMaterial"], glm::translate(glm::mat4(1.0f), glm::vec3(-2.5f, -1.0f, 0.0f))));
+    temp->scale(scale);
 
     scene.addRenderer(lightCube = new CubeModel(Material::materials["white"], glm::translate(glm::mat4(1.0f), scene.light.position)));
 

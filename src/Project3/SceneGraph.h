@@ -81,6 +81,11 @@ private:
     std::vector<Renderer*> group;
     glm::mat4 xform;
     treeNode* parent;
+
+    glm::vec3 _translate;
+    glm::vec3 _scale;
+    glm::vec3 _rotationEuler;
+
 public:
     bool enabled;
 
@@ -95,6 +100,7 @@ public:
     void addRenderer(Renderer* r) { group.push_back(r); }
     treeNode* addChild(glm::mat4 xf) { children.push_back(new treeNode(xf, this)); return children.back(); }
     treeNode* getParent() { return this->parent; }
+    std::vector<treeNode*> *getChildren() { return &children; };
 
     void traverse(glm::mat4 vMat, glm::mat4 projection, double deltaTime, SceneGraph* sg);
     void purgeRenderer(Renderer *x);

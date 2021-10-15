@@ -1,5 +1,10 @@
 #pragma once
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include "SceneGraph.h"
 #include "Material.h"
 
@@ -50,7 +55,23 @@ public:
 
 public: void setXForm(glm::mat4 mat)
 {
+
     modelMatrix = mat;
+
+    glm::vec3 scale;
+    glm::quat rotation;
+    glm::vec3 translation;
+    glm::vec3 skew;
+    glm::vec4 perspective;
+    glm::decompose(mat, scale, rotation, translation, skew, perspective);
+
+    _translate = translation;
+
+    _scale = scale;
+
+    rotation = glm::conjugate(rotation);
+
+    _rotationEuler = glm::eulerAngles(rotation) * 3.14159f / 180.f;
 }
 
 public: void rotate(const float axis[], const float angle)
@@ -58,12 +79,23 @@ public: void rotate(const float axis[], const float angle)
     modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(axis[0], axis[1], axis[2]));
 }    
 
+public: void setRotation(float angle, glm::vec3 axis)
+{
+    //modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(axis.x, axis.y, axis.z));
+}
+public: void setRotation(glm::vec3 eulers)
+{
+    _rotationEuler = eulers;
+    //modelMatrix = glm::rotate(modelMatrix, angle, glm::vec3(axis[0], axis[1], axis[2]));
+}
+
 public: void translate(const float trans[])
 {
     modelMatrix = glm::translate(modelMatrix, glm::vec3(trans[0], trans[1], trans[2]));
 }
 public: void setTranslate(glm::vec3 trans)
 {
+    _translate = trans;
     modelMatrix = glm::mat4(glm::mat3(modelMatrix));
     modelMatrix = glm::translate(glm::mat4(1.0), trans) * modelMatrix;
 }
@@ -71,6 +103,13 @@ public: void setTranslate(glm::vec3 trans)
 public: void scale(const float scale[])
 {
     modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
+}
+
+public: void setScale(glm::vec3 scale)
+{
+    _scale = scale;
+
+    //modelMatrix = glm::scale(modelMatrix, glm::vec3(scale[0], scale[1], scale[2]));
 }
 public: 
     virtual void render(glm::mat4 vMat, glm::mat4 pMat, double deltaTime, SceneGraph *sg);

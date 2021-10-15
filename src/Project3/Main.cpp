@@ -35,7 +35,7 @@
 #include "drawImGui.hpp"
 
 #include "Chapter0.h" // START HERE!  you'll find the start, update, end and callback
-
+#include "BasicChapter.h"
 /*
 * Change Chapter# to Chapter0, Chapter1, Chapter1a, or Chapter2 to render different chapters
 */
