@@ -1,0 +1,136 @@
+//
+// Sandbox program for Computer Graphics For Games (G4G)
+// created May 2021 by Eric Ameres for experimenting
+// with OpenGL and various graphics algorithms
+//
+
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <cmath>
+
+#include "shader_s.h"
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+// settings
+const unsigned int SCR_WIDTH = 720;
+const unsigned int SCR_HEIGHT = 720;
+
+unsigned int VBO, VAO, EBO, indexCount;
+
+char vtext[1024 * 8] = 
+"#version 410 core\n\n"
+"layout (location = 0) in vec3 aPos;\n\n"
+"void main()\n"
+"{\n"
+"if (gl_VertexID == 0) gl_Position = vec4(0.25, -0.25, 0.0, 1.0);\n"
+"else if (gl_VertexID == 1) gl_Position = vec4(-0.25, -0.25, 0.0, 1.0);\n"
+"else gl_Position = vec4(0.25, 0.25, 0.0, 1.0);\n"
+//"gl_Position = vec4(aPos,1.0f);\n"
+"}\n" ; // fragment shader source code
+
+
+char ftext[1024 * 8] =
+"#version 410 core\n\n"
+"out vec4 FragColor;\n\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(1.0f,0.0f,0.0f, 1.0f);\n"
+"}\n"  ; // vertex shader source code
+
+Shader ourShader;
+
+using namespace std;
+
+int main()
+{
+    // glfw: initialize and configure
+    // ------------------------------
+    glfwInit();
+
+    const char* glsl_version = "#version 150";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+    // glfw window creation
+    // --------------------
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Graphics4Games", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    
+    // glad: load all OpenGL function pointers
+    // ---------------------------------------
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+    
+    // build and compile our shader program
+    // ------------------------------------
+    ourShader.reload(vtext, ftext);
+    
+    indexCount = 3;
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+    
+    // render loop
+    // -----------
+    while (!glfwWindowShouldClose(window))
+    {
+        // input
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+
+        // render
+        // ------
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+        ourShader.use();
+
+        /*
+        glBegin(GL_TRIANGLES);
+            glVertex3f(-0.6f, -0.4f, 0.f);
+            glVertex3f(0.6f, -0.4f, 0.f);
+            glVertex3f(0.f, 0.6f, 0.f);
+        glEnd();
+         */
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, indexCount);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    // glfw: terminate, clearing all previously allocated GLFW resources.
+    // ------------------------------------------------------------------
+    glfwTerminate();
+    return 0;
+}
+
+// glfw: whenever the window size changed (by OS or user resize) this callback function executes
+// ---------------------------------------------------------------------------------------------
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    // make sure the viewport matches the new window dimensions
+    glViewport(0, 0, width, height);
+}

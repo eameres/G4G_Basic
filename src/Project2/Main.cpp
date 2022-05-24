@@ -22,6 +22,8 @@
 #include <vector>
 #include <filesystem>
 
+unsigned int texture;
+
 #include "shader_s.h"
 #include "renderer.h"
 
@@ -35,7 +37,6 @@ glm::mat4 vMat; // view matrix
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
 
-unsigned int texture;
 
 // image buffer used by raster drawing basics.cpp
 extern unsigned char imageBuff[512][512][3];
@@ -44,17 +45,17 @@ int myTexture();
 
 class QuadRenderer : public renderer {
     // ------------------------------------------------------------------
-    float vertices[12] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f   // top left 
+    float vertices[20] = {
+         0.5f,  0.5f, 0.0f, 1.0,1.0, // top right
+         0.5f, -0.5f, 0.0f, 1.0,0.0,   // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0,0.0,   // bottom left
+        -0.5f,  0.5f, 0.0f, 0.0,1.0,    // top left 
     };
 
 protected: 
     unsigned int indices[6] = {  // note that we start from 0!
-        0, 1, 3,  // first Triangle
-        1, 2, 3   // second Triangle
+        3, 1, 0,  // first Triangle
+        3, 2, 1   // second Triangle
     };
 
     public : QuadRenderer(Shader *shader,glm::mat4 m) 
@@ -65,7 +66,7 @@ protected:
         myShader = shader;
 
         glGenVertexArrays(1, &VAO);
-        glGenBuffers(1, &VBO);
+        glGenBuffers(1, VBO);
         glGenBuffers(1, &EBO);
         // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
         glBindVertexArray(VAO);
@@ -73,11 +74,14 @@ protected:
 
         // vertex buffer object, simple version, just coordinates
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0); 
+        
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
 
         // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -209,6 +213,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
@@ -241,7 +246,7 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    Shader ourShader("data/vertex.lgsl", "data/fragment.lgsl"); // declare and intialize our shader
+    Shader ourShader("data/vertex.glsl", "data/fragment.glsl"); // declare and intialize our shader
 
     myTexture();
     setupTextures();
@@ -258,18 +263,22 @@ int main()
     renderers.push_back(&myQuad); // add it to the render list
 
     // easter egg!  add another quad to the render list
-    /*
+    
     glm::mat4 tf2 =glm::translate(glm::mat4(1.0f), glm::vec3(-1.5f, 0.0f, 0.0f));
     tf2 = glm::scale(tf2, glm::vec3(0.5f, 0.5f, 0.5f));
 
     QuadRenderer myQuad2(&ourShader, tf2);
     renderers.push_back(&myQuad2);
-    */    
+        
 
     // render loop
     // -----------
 
     double lastTime = glfwGetTime();
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW);
 
     while (!glfwWindowShouldClose(window))
     {

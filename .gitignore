@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
+<<<<<<< HEAD
 
+=======
+>>>>>>> BigBrainBranch
 g4gBuild
 
 # Compiled Object files
@@ -28,7 +31,6 @@ g4gBuild
 # Executables
 *.out
 *.app
-build/imgui.ini
-imgui.ini
+
 imgui.ini
 imgui.ini

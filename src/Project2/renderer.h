@@ -5,7 +5,7 @@
 class renderer {
 
 protected:
-    unsigned int VBO = 0, VAO = 0, EBO = 0;
+    unsigned int VBO[2], VAO = 0, EBO = 0;
     unsigned int indexCount;
 
     glm::mat4 modelMatrix;
@@ -39,7 +39,7 @@ public: void scale(const float scale[])
 
         myShader->use();
 
-        //rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
+        rotate(glm::value_ptr(glm::vec3(0.0f, 0.0f, 1.0f)), deltaTime); // easter egg!  rotate incrementally with delta time
 
         mvp = pMat * vMat * modelMatrix;
 
@@ -48,6 +48,10 @@ public: void scale(const float scale[])
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "p"), 1, GL_FALSE, glm::value_ptr(pMat));
 
         glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "mvp"), 1, GL_FALSE, glm::value_ptr(mvp));
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(myShader->ID, "albedo"), 0);
 
         glBindVertexArray(VAO);
 
